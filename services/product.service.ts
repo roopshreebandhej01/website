@@ -18,9 +18,21 @@ import {
   type ProductListQuery,
   type ProductListRow,
 } from '@/repositories/product.repository'
+import { unstable_cache } from 'next/cache'
 import { getS3ObjectPreviewUrl } from '@/lib/s3'
 import type { ProductPayload } from '@/validators/product.validator'
 import { listReviewMediaRows } from '@/repositories/review.repository'
+
+export const CATALOG_CATEGORIES_CACHE_TAG = 'catalog-categories'
+
+const getCachedCategoryRows = unstable_cache(
+  async (limit: number) => listCategoryRows(limit),
+  ['catalog-categories'],
+  {
+    revalidate: 300,
+    tags: [CATALOG_CATEGORIES_CACHE_TAG],
+  },
+)
 
 export async function createProduct(payload: ProductPayload) {
   const priceInPaise = Math.round(payload.price * 100)
@@ -98,7 +110,7 @@ export async function getRecommendedProducts(limit = 5) {
 }
 
 export async function getCatalogCategories(limit = 8) {
-  const rows = await listCategoryRows(limit)
+  const rows = await getCachedCategoryRows(limit)
 
   return rows.map((category) => ({
     id: category.id,

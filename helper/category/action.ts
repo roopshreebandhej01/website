@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CATALOG_CATEGORIES_CACHE_TAG } from "@/services/product.service";
 import {
   createCategoryService,
   deleteCategoryService,
@@ -31,6 +32,7 @@ export async function createCategory(payload: unknown) {
   try {
     await createCategoryService(validateCategoryPayload(payload));
 
+    updateTag(CATALOG_CATEGORIES_CACHE_TAG);
     revalidatePath("/admin/category");
     return { success: true, message: "Category added successfully" };
   } catch (error) {
@@ -47,6 +49,7 @@ export async function updateCategory(payload: unknown) {
     const data = validateCategoryUpdatePayload(payload);
     await updateCategoryService(data);
 
+    updateTag(CATALOG_CATEGORIES_CACHE_TAG);
     revalidatePath("/admin/category");
     revalidatePath(`/admin/category/${data.id}`);
     return { success: true, message: "Category updated successfully" };
@@ -63,6 +66,7 @@ export async function updateCategory(payload: unknown) {
 export async function deleteCategory(id: string) {
   try {
     await deleteCategoryService(id);
+    updateTag(CATALOG_CATEGORIES_CACHE_TAG);
     revalidatePath("/admin/category");
 
     return { success: true, message: "Category deleted successfully" };

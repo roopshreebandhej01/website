@@ -8,14 +8,18 @@ import { DATABASE_URL } from "@/config/env";
 // every reload, quickly exhausting Supabase's 15-connection pool.
 // We store the client on `globalThis` so it is reused across reloads.
 declare global {
-  // eslint-disable-next-line no-var
   var __pgClient: ReturnType<typeof postgres> | undefined;
 }
+
+const maxConnections = Math.max(
+  1,
+  Number.parseInt(process.env.DATABASE_MAX_CONNECTIONS ?? "1", 10) || 1,
+);
 
 const client =
   globalThis.__pgClient ??
   postgres(DATABASE_URL, {
-    max: 3,           // cap at 3 connections — session mode pool allows 15 total
+    max: maxConnections, // session-mode pools are capped across all app instances
     idle_timeout: 20, // release idle connections after 20 s
     connect_timeout: 10,
     // NOTE: do NOT set prepare:false here — that is only needed for PgBouncer
