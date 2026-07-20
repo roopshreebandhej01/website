@@ -15,15 +15,17 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "About Roopshree - A Legacy of Bandhej Craftsmanship Since 1978",
-    description: "Roopshree brings you handcrafted Bandhej sarees & dupattas. Gajji silk, zardozi & gota patti pieces, rooted in Rajasthan's textile heritage. Browse the collection.",
-    url: "https://roopshree-one.vercel.app/about",
+    description:
+      "Roopshree brings you handcrafted Bandhej sarees & dupattas. Gajji silk, zardozi & gota patti pieces, rooted in Rajasthan's textile heritage. Browse the collection.",
+    url: "https://roopshreebandhej.com/about",
     type: "website",
-    images: [{ url: "https://roopshree-one.vercel.app/about/hero_bg.png" }],
+    images: [{ url: "https://roopshreebandhej.com/about/hero_bg.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "About Roopshree - A Legacy of Bandhej Craftsmanship Since 1978",
-    description: "Roopshree brings you handcrafted Bandhej sarees & dupattas. Gajji silk, zardozi & gota patti pieces, rooted in Rajasthan's textile heritage. Browse the collection.",
+    description:
+      "Roopshree brings you handcrafted Bandhej sarees & dupattas. Gajji silk, zardozi & gota patti pieces, rooted in Rajasthan's textile heritage. Browse the collection.",
   },
 };
 

@@ -12,15 +12,17 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Roopshree Blog - Bandhej Stories, Styling & Maintenance Tips",
-    description: "Explore Roopshree's blog for Bandhej craftsmanship stories, saree & dupatta styling tips, fabric care guides, and cultural insights from the heart of Rajasthan.",
-    url: "https://roopshree-one.vercel.app/blogs",
+    description:
+      "Explore Roopshree's blog for Bandhej craftsmanship stories, saree & dupatta styling tips, fabric care guides, and cultural insights from the heart of Rajasthan.",
+    url: "https://roopshreebandhej.com/blogs",
     type: "website",
-    images: [{ url: "https://roopshree-one.vercel.app/blog/blog-bg.png" }],
+    images: [{ url: "https://roopshreebandhej.com/blog/blog-bg.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Roopshree Blog - Bandhej Stories, Styling & Maintenance Tips",
-    description: "Explore Roopshree's blog for Bandhej craftsmanship stories, saree & dupatta styling tips, fabric care guides, and cultural insights from the heart of Rajasthan.",
+    description:
+      "Explore Roopshree's blog for Bandhej craftsmanship stories, saree & dupatta styling tips, fabric care guides, and cultural insights from the heart of Rajasthan.",
   },
 };
 
@@ -94,11 +96,7 @@ async function BlogContent({
   );
 }
 
-function Blogs({
-  searchParams,
-}: {
-  searchParams?: BlogSearchParams;
-}) {
+function Blogs({ searchParams }: { searchParams?: BlogSearchParams }) {
   return (
     <Suspense fallback={<BlogListingSkeleton />}>
       <BlogContent searchParams={searchParams} />

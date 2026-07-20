@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     title: "Shop Authentic Bandhani Sarees & Dupattas Online | Roopshree",
     description:
       "Browse Roopshree's full collection of Bandhej sarees & dupattas, Gajji silk, zardozi work & gota-patti designs. Handcrafted pieces for weddings & festive wear.",
-    url: "https://roopshree-one.vercel.app/shop",
+    url: "https://roopshreebandhej.com/shop",
     type: "website",
-    images: [{ url: "https://roopshree-one.vercel.app/shop/shop_bg.png" }],
+    images: [{ url: "https://roopshreebandhej.com/shop/shop_bg.png" }],
   },
   twitter: {
     card: "summary_large_image",

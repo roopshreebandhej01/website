@@ -11,14 +11,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Terms & Conditions | Roopshree Shopping Policies",
-    description: "Review Roopshree's Terms & Conditions covering orders, payments, shipping, returns, and website usage policies for our Bandhej saree and dupatta collections.",
-    url: "https://roopshree-one.vercel.app/terms-and-conditions",
+    description:
+      "Review Roopshree's Terms & Conditions covering orders, payments, shipping, returns, and website usage policies for our Bandhej saree and dupatta collections.",
+    url: "https://roopshreebandhej.com/terms-and-conditions",
     type: "website",
   },
   twitter: {
     card: "summary",
     title: "Terms & Conditions | Roopshree Shopping Policies",
-    description: "Review Roopshree's Terms & Conditions covering orders, payments, shipping, returns, and website usage policies for our Bandhej saree and dupatta collections.",
+    description:
+      "Review Roopshree's Terms & Conditions covering orders, payments, shipping, returns, and website usage policies for our Bandhej saree and dupatta collections.",
   },
 };
 
@@ -62,20 +64,24 @@ export default function TermsAndConditions() {
       {/* Main Content Layout */}
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
         <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-12 xl:gap-16">
-          
           {/* Sticky Left Sidebar Navigation */}
           <PolicySidebar items={sidebarItems} />
 
           {/* Right Column - Policy Content */}
           <div className="space-y-12 text-[#3F2617]/80 text-sm leading-relaxed md:text-base lg:space-y-16">
-            
             <section className="bg-[#FDF9F4]/40 border border-[#C39150]/10 rounded-lg p-5 md:p-6">
               <p>
-                <strong>Welcome to Roop Shree.</strong> By accessing our website or placing an order, you agree to comply with the following Terms & Conditions. Please read them carefully before using our website.
+                <strong>Welcome to Roop Shree.</strong> By accessing our website
+                or placing an order, you agree to comply with the following
+                Terms & Conditions. Please read them carefully before using our
+                website.
               </p>
             </section>
 
-            <section id="about-us" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="about-us"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -83,11 +89,16 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p className="mt-2">
-                Roop Shree is engaged in manufacturing and trading authentic Rajasthani Bandhej products, including Peela Chunri, Dupattas, Sarees, Lehengas, and handcrafted traditional textiles.
+                Roop Shree is engaged in manufacturing and trading authentic
+                Rajasthani Bandhej products, including Peela Chunri, Dupattas,
+                Sarees, Lehengas, and handcrafted traditional textiles.
               </p>
             </section>
 
-            <section id="product-info" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="product-info"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -97,20 +108,32 @@ export default function TermsAndConditions() {
               <ul className="list-none space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>We strive to display products as accurately as possible.</span>
+                  <span>
+                    We strive to display products as accurately as possible.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Due to different screen settings, slight variations in color may occur.</span>
+                  <span>
+                    Due to different screen settings, slight variations in color
+                    may occur.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>As many of our products are handcrafted, slight irregularities in dyeing, weaving, embroidery, zari work, or handwork are natural and should not be considered defects.</span>
+                  <span>
+                    As many of our products are handcrafted, slight
+                    irregularities in dyeing, weaving, embroidery, zari work, or
+                    handwork are natural and should not be considered defects.
+                  </span>
                 </li>
               </ul>
             </section>
 
-            <section id="pricing" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="pricing"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -124,16 +147,23 @@ export default function TermsAndConditions() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Prices are subject to change without prior notice.</span>
+                  <span>
+                    Prices are subject to change without prior notice.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Applicable taxes, if any, will be charged at checkout.</span>
+                  <span>
+                    Applicable taxes, if any, will be charged at checkout.
+                  </span>
                 </li>
               </ul>
             </section>
 
-            <section id="order-acceptance" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="order-acceptance"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -141,7 +171,8 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p className="mb-3">
-                Roop Shree reserves the right to accept, reject, or cancel any order due to:
+                Roop Shree reserves the right to accept, reject, or cancel any
+                order due to:
               </p>
               <ul className="list-none space-y-3 pl-4">
                 <li className="flex items-start gap-2">
@@ -167,7 +198,10 @@ export default function TermsAndConditions() {
               </ul>
             </section>
 
-            <section id="intellectual-property" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="intellectual-property"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -175,11 +209,17 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p>
-                All website content including images, logos, product descriptions, videos, graphics, and designs belongs to Roop Shree and may not be copied, reproduced, or used without written permission.
+                All website content including images, logos, product
+                descriptions, videos, graphics, and designs belongs to Roop
+                Shree and may not be copied, reproduced, or used without written
+                permission.
               </p>
             </section>
 
-            <section id="user-responsibilities" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="user-responsibilities"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -187,11 +227,15 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p>
-                Customers agree not to misuse the website, attempt unauthorized access, or engage in fraudulent activities.
+                Customers agree not to misuse the website, attempt unauthorized
+                access, or engage in fraudulent activities.
               </p>
             </section>
 
-            <section id="limitation-of-liability" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="limitation-of-liability"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -199,11 +243,15 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p>
-                Roop Shree shall not be liable for indirect or consequential damages arising from the use of our products or website.
+                Roop Shree shall not be liable for indirect or consequential
+                damages arising from the use of our products or website.
               </p>
             </section>
 
-            <section id="governing-law" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="governing-law"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -211,7 +259,9 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <p>
-                These Terms & Conditions shall be governed by the laws of India. Any disputes shall be subject to the jurisdiction of the competent courts in Rajasthan.
+                These Terms & Conditions shall be governed by the laws of India.
+                Any disputes shall be subject to the jurisdiction of the
+                competent courts in Rajasthan.
               </p>
             </section>
 
@@ -230,12 +280,27 @@ export default function TermsAndConditions() {
                 <p className="text-sm text-[#C39150] mb-6 font-medium">
                   Manufacturer & Trader of Authentic Rajasthani Bandhej Products
                 </p>
-                
+
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                      <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Address</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Address
+                      </h4>
                       <p className="mt-1 text-sm text-[#3F2617]/80">
                         Inside Tabela Gate,
                         <br />
@@ -245,19 +310,51 @@ export default function TermsAndConditions() {
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Phone</h4>
-                      <a href="tel:+919783841066" className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline">
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Phone
+                      </h4>
+                      <a
+                        href="tel:+919783841066"
+                        className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
+                      >
                         +91 97838 41066
                       </a>
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+                      <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">WhatsApp</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        WhatsApp
+                      </h4>
                       <a
                         href="https://wa.me/919529888006"
                         target="_blank"
@@ -270,9 +367,24 @@ export default function TermsAndConditions() {
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
+                      <path d="M3 7l9 6l9 -6" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Email</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Email
+                      </h4>
                       <a
                         href="mailto:Adityagarwal23@gmail.com"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
@@ -285,13 +397,15 @@ export default function TermsAndConditions() {
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="mt-8 pt-6 border-t border-[#C39150]/10 text-xs text-[#3F2617]/60">
-                  Products: Peela Chunri, Bandhej Dupattas, Sarees, Lehengas, Gajji Silk, Gota Patti, Zardozi & Traditional Rajasthani Textiles. For any queries regarding orders, returns, shipping, or privacy, please contact us.
+                  Products: Peela Chunri, Bandhej Dupattas, Sarees, Lehengas,
+                  Gajji Silk, Gota Patti, Zardozi & Traditional Rajasthani
+                  Textiles. For any queries regarding orders, returns, shipping,
+                  or privacy, please contact us.
                 </p>
               </div>
             </section>
-
           </div>
         </div>
       </div>

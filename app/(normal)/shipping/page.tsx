@@ -11,14 +11,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Shipping Policy | Roopshree Bandhej Sarees & Dupattas",
-    description: "Know Roopshree's shipping details – delivery timelines, charges, tracking, and pan-India shipping for our Bandhej sarees and dupattas collection.",
-    url: "https://roopshree-one.vercel.app/shipping",
+    description:
+      "Know Roopshree's shipping details – delivery timelines, charges, tracking, and pan-India shipping for our Bandhej sarees and dupattas collection.",
+    url: "https://roopshreebandhej.com/shipping",
     type: "website",
   },
   twitter: {
     card: "summary",
     title: "Shipping Policy | Roopshree Bandhej Sarees & Dupattas",
-    description: "Know Roopshree's shipping details – delivery timelines, charges, tracking, and pan-India shipping for our Bandhej sarees and dupattas collection.",
+    description:
+      "Know Roopshree's shipping details – delivery timelines, charges, tracking, and pan-India shipping for our Bandhej sarees and dupattas collection.",
   },
 };
 
@@ -52,7 +54,8 @@ export default function ShippingPolicy() {
             <span className="size-1.5 rotate-45 bg-[#C39150]" />
           </div>
           <p className="mt-5 text-sm text-[#3F2617]/70">
-            Read about our order processing, shipping rates, delivery timelines, and courier partners.
+            Read about our order processing, shipping rates, delivery timelines,
+            and courier partners.
           </p>
         </div>
       </div>
@@ -60,14 +63,15 @@ export default function ShippingPolicy() {
       {/* Main Content Layout */}
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
         <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-12 xl:gap-16">
-          
           {/* Sticky Left Sidebar Navigation */}
           <PolicySidebar items={sidebarItems} />
 
           {/* Right Column - Policy Content */}
           <div className="space-y-12 text-[#3F2617]/80 text-sm leading-relaxed md:text-base lg:space-y-16">
-            
-            <section id="order-processing" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="order-processing"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -77,20 +81,33 @@ export default function ShippingPolicy() {
               <ul className="list-none space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Standard orders are processed within <strong>2–4 business days</strong>.</span>
+                  <span>
+                    Standard orders are processed within{" "}
+                    <strong>2–4 business days</strong>.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Orders placed on Sundays or public holidays will be processed on the next working day.</span>
+                  <span>
+                    Orders placed on Sundays or public holidays will be
+                    processed on the next working day.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Customized, handcrafted, made-to-order, or bulk orders may require additional processing time. Customers will be informed accordingly.</span>
+                  <span>
+                    Customized, handcrafted, made-to-order, or bulk orders may
+                    require additional processing time. Customers will be
+                    informed accordingly.
+                  </span>
                 </li>
               </ul>
             </section>
 
-            <section id="delivery-time" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="delivery-time"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -101,23 +118,34 @@ export default function ShippingPolicy() {
               <ul className="list-none space-y-3 pl-4">
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span><strong>Metro Cities:</strong> 3–7 business days</span>
+                  <span>
+                    <strong>Metro Cities:</strong> 3–7 business days
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span><strong>Other Cities:</strong> 5–10 business days</span>
+                  <span>
+                    <strong>Other Cities:</strong> 5–10 business days
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span><strong>Remote Locations:</strong> 7–14 business days</span>
+                  <span>
+                    <strong>Remote Locations:</strong> 7–14 business days
+                  </span>
                 </li>
               </ul>
               <p className="mt-4 text-[#3F2617]/70 text-xs italic">
-                * Delivery timelines are estimates and may vary due to courier operations, weather conditions, festivals, or unforeseen circumstances.
+                * Delivery timelines are estimates and may vary due to courier
+                operations, weather conditions, festivals, or unforeseen
+                circumstances.
               </p>
             </section>
 
-            <section id="shipping-charges" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="shipping-charges"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -127,16 +155,25 @@ export default function ShippingPolicy() {
               <ul className="list-none space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Shipping charges (if applicable) are calculated during checkout.</span>
+                  <span>
+                    Shipping charges (if applicable) are calculated during
+                    checkout.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Promotional free shipping offers will be displayed on the website whenever available.</span>
+                  <span>
+                    Promotional free shipping offers will be displayed on the
+                    website whenever available.
+                  </span>
                 </li>
               </ul>
             </section>
 
-            <section id="courier-partners" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="courier-partners"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -144,11 +181,15 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <p>
-                We ship through reliable courier partners to ensure safe delivery.
+                We ship through reliable courier partners to ensure safe
+                delivery.
               </p>
             </section>
 
-            <section id="order-tracking" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="order-tracking"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -156,11 +197,15 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <p>
-                Customers will receive tracking details via SMS, email, or WhatsApp once the order is dispatched.
+                Customers will receive tracking details via SMS, email, or
+                WhatsApp once the order is dispatched.
               </p>
             </section>
 
-            <section id="delivery-attempts" className="scroll-mt-28 border-b border-[#C39150]/10 pb-10">
+            <section
+              id="delivery-attempts"
+              className="scroll-mt-28 border-b border-[#C39150]/10 pb-10"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <span className="size-2 rotate-45 bg-[#C39150]" />
                 <h2 className="font-heading text-xl font-semibold text-[#3F2617] md:text-2xl">
@@ -168,7 +213,10 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <p>
-                Courier partners generally make multiple delivery attempts. If the shipment is returned due to incorrect address or customer unavailability, additional shipping charges may apply for re-dispatch.
+                Courier partners generally make multiple delivery attempts. If
+                the shipment is returned due to incorrect address or customer
+                unavailability, additional shipping charges may apply for
+                re-dispatch.
               </p>
             </section>
 
@@ -187,12 +235,27 @@ export default function ShippingPolicy() {
                 <p className="text-sm text-[#C39150] mb-6 font-medium">
                   Manufacturer & Trader of Authentic Rajasthani Bandhej Products
                 </p>
-                
+
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                      <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Address</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Address
+                      </h4>
                       <p className="mt-1 text-sm text-[#3F2617]/80">
                         Inside Tabela Gate,
                         <br />
@@ -202,19 +265,51 @@ export default function ShippingPolicy() {
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Phone</h4>
-                      <a href="tel:+919783841066" className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline">
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Phone
+                      </h4>
+                      <a
+                        href="tel:+919783841066"
+                        className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
+                      >
                         +91 97838 41066
                       </a>
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+                      <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">WhatsApp</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        WhatsApp
+                      </h4>
                       <a
                         href="https://wa.me/919529888006"
                         target="_blank"
@@ -227,9 +322,24 @@ export default function ShippingPolicy() {
                   </div>
 
                   <div className="flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[#C39150] shrink-0 mt-0.5"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" /><path d="M3 7l9 6l9 -6" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-5 text-[#C39150] shrink-0 mt-0.5"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10" />
+                      <path d="M3 7l9 6l9 -6" />
+                    </svg>
                     <div>
-                      <h4 className="font-semibold text-[#3F2617] text-sm">Email</h4>
+                      <h4 className="font-semibold text-[#3F2617] text-sm">
+                        Email
+                      </h4>
                       <a
                         href="mailto:Adityagarwal23@gmail.com"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
@@ -242,13 +352,15 @@ export default function ShippingPolicy() {
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="mt-8 pt-6 border-t border-[#C39150]/10 text-xs text-[#3F2617]/60">
-                  Products: Peela Chunri, Bandhej Dupattas, Sarees, Lehengas, Gajji Silk, Gota Patti, Zardozi & Traditional Rajasthani Textiles. For any queries regarding orders, returns, shipping, or privacy, please contact us.
+                  Products: Peela Chunri, Bandhej Dupattas, Sarees, Lehengas,
+                  Gajji Silk, Gota Patti, Zardozi & Traditional Rajasthani
+                  Textiles. For any queries regarding orders, returns, shipping,
+                  or privacy, please contact us.
                 </p>
               </div>
             </section>
-
           </div>
         </div>
       </div>

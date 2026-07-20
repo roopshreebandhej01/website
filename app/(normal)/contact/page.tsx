@@ -48,16 +48,20 @@ export const metadata: Metadata = {
     canonical: "https://roopshreebandhej.com/contact",
   },
   openGraph: {
-    title: "Contact Us for Bandhani Sarees, Dupattas & Custom Orders | Roopshree",
-    description: "Get in touch with Roopshree for enquiries about Bandhej sarees, dupattas, custom orders, or bulk requests. Reach us via phone, email, or WhatsApp. Shop now.",
-    url: "https://roopshree-one.vercel.app/contact",
+    title:
+      "Contact Us for Bandhani Sarees, Dupattas & Custom Orders | Roopshree",
+    description:
+      "Get in touch with Roopshree for enquiries about Bandhej sarees, dupattas, custom orders, or bulk requests. Reach us via phone, email, or WhatsApp. Shop now.",
+    url: "https://roopshreebandhej.com/contact",
     type: "website",
-    images: [{ url: "https://roopshree-one.vercel.app/contact/contact_bg.png" }],
+    images: [{ url: "https://roopshreebandhej.com/contact/contact_bg.png" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact Us for Bandhani Sarees, Dupattas & Custom Orders | Roopshree",
-    description: "Get in touch with Roopshree for enquiries about Bandhej sarees, dupattas, custom orders, or bulk requests. Reach us via phone, email, or WhatsApp. Shop now.",
+    title:
+      "Contact Us for Bandhani Sarees, Dupattas & Custom Orders | Roopshree",
+    description:
+      "Get in touch with Roopshree for enquiries about Bandhej sarees, dupattas, custom orders, or bulk requests. Reach us via phone, email, or WhatsApp. Shop now.",
   },
 };
 
@@ -71,7 +75,7 @@ async function contact() {
   } catch (error) {
     console.error("Failed to load contact categories:", error);
   }
-  
+
   if (!categoryNames.includes("Custom Order")) {
     categoryNames.push("Custom Order");
   }

@@ -32,9 +32,9 @@ export const metadata: Metadata = {
     title: "Authentic Bandhej Sarees & Dupattas from Rajasthan | Roopshree",
     description:
       "Shop handcrafted Bandhej sarees & dupattas from Roopshree. Authentic heritage from Rajasthan with trusted quality. Explore the latest collection and shop online.",
-    url: "https://roopshree-one.vercel.app/",
+    url: "https://roopshreebandhej.com/",
     type: "website",
-    images: [{ url: "https://roopshree-one.vercel.app/header-logo.png" }],
+    images: [{ url: "https://roopshreebandhej.com/header-logo.png" }],
   },
   twitter: {
     card: "summary_large_image",
