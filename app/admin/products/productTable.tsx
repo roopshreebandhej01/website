@@ -35,6 +35,8 @@ export type ProductRow = {
   strikeThroughPrice: number | null;
   status: "draft" | "active" | "archived";
   isFeatured: boolean;
+  isNewArrival: boolean;
+  isTrending: boolean;
   image?: string;
   createdAt: Date;
 };
@@ -91,6 +93,8 @@ export default function ProductTable({ products }: { products: ProductRow[] }) {
           <TableHead>Strike Price</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Featured</TableHead>
+          <TableHead>New Arrival</TableHead>
+          <TableHead>Trending</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -119,6 +123,8 @@ export default function ProductTable({ products }: { products: ProductRow[] }) {
               <TableCell>{formatPrice(product.strikeThroughPrice)}</TableCell>
               <TableCell className="capitalize">{product.status}</TableCell>
               <TableCell>{product.isFeatured ? "Yes" : "No"}</TableCell>
+              <TableCell>{product.isNewArrival ? "Yes" : "No"}</TableCell>
+              <TableCell>{product.isTrending ? "Yes" : "No"}</TableCell>
               <TableCell>
                 <div className="flex justify-end gap-2">
                   {/* Edit */}

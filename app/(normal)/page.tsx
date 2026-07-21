@@ -9,7 +9,8 @@ import StayConnected from "@/components/home/StayConnected";
 import {
   getCatalogCategories,
   getFeaturedProducts,
-  getRecommendedProducts,
+  getNewArrivalProducts,
+  getTrendingProducts,
 } from "@/services/product.service";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -112,8 +113,8 @@ async function HomeDataSections() {
   const [categories, newArrivals, trendingProducts, featuredProducts] =
     await Promise.all([
       getCatalogCategories(5),
-      getRecommendedProducts(4),
-      getFeaturedProducts(5),
+      getNewArrivalProducts(4),
+      getTrendingProducts(5),
       getFeaturedProducts(8),
     ]);
 

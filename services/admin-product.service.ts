@@ -31,11 +31,12 @@ function toPaise(value: unknown) {
 function buildProductBaseValues(payload: AdminProductPayload) {
   const variant = getPrimaryAdminProductVariant(payload)
   const name = String(variant.name ?? payload.name ?? '').trim()
+  const requestedSlug = String(payload.slug ?? '').trim()
 
   return {
     name,
     sku: (String(variant.sku || payload.sku || slugify(name)).trim()) || slugify(name),
-    slug: slugify(name),
+    slug: slugify(requestedSlug || name),
     shortDescription: payload.shortDescription || null,
     description: variant.description ?? payload.description ?? null,
     basePrice: toPaise(variant.price ?? payload.price),
@@ -47,6 +48,8 @@ function buildProductBaseValues(payload: AdminProductPayload) {
     ),
     status: payload.status ?? 'active',
     isFeatured: Boolean(payload.isFeatured),
+    isNewArrival: Boolean(payload.isNewArrival),
+    isTrending: Boolean(payload.isTrending),
   }
 }
 

@@ -1,9 +1,13 @@
 import { getCatalogProducts } from '@/services/product.service'
 import { MetadataRoute } from 'next'
 
+const isProductionBuild = process.env.NEXT_PHASE === 'phase-production-build'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://roopshreebandhej.com'
-  const products = await getCatalogProducts({ limit: 1000 })
+  const products = isProductionBuild
+    ? []
+    : await getCatalogProducts({ limit: 1000 })
 
   const productEntries: MetadataRoute.Sitemap = products.map((product) => ({
     url: `${baseUrl}/product/${product.slug}`,

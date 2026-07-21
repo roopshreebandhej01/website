@@ -1,12 +1,6 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
-import {
-  formatPrice,
-  productToCartItem,
-  type Product,
-} from "@/components/global/const"
+import type { Product } from "@/components/global/const"
 import { ProductCard } from "@/components/product/ProductCard"
 
 const Trending = ({ products: fetchedProducts }: { products?: Product[] }) => {

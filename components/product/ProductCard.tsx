@@ -38,10 +38,16 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group min-w-0">
       <div className="relative aspect-[0.75] overflow-hidden bg-[#f8efe6] md:aspect-[0.78]">
+        {product.isNewArrival ? (
+          <span className="absolute left-3 top-3 z-10 rounded-[2px] bg-[#3F2617] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
+            New Arrival
+          </span>
+        ) : null}
         <Link
           href={`/product/${product.slug}`}
           className="absolute inset-0"
           aria-label={`View ${product.name}`}
+          prefetch={false}
         >
           {product.image ? (
             <Image

@@ -63,6 +63,8 @@ export type ProductListQuery = {
   maxPriceInPaise?: number
   filters?: Record<string, string[]>
   featured?: boolean
+  newArrival?: boolean
+  trending?: boolean
   sortBy?: 'featured' | 'newest' | 'price-low' | 'price-high'
 }
 
@@ -84,6 +86,9 @@ export type ProductListRow = {
   variantBannerImage: string | null
   imageKey: string | null
   imageAlt: string | null
+  isFeatured: boolean
+  isNewArrival: boolean
+  isTrending: boolean
 }
 
 export type CategoryListRow = {
@@ -209,6 +214,12 @@ function getProductWhere(query: ProductListQuery) {
     query.featured === undefined
       ? undefined
       : eq(products.isFeatured, query.featured),
+    query.newArrival === undefined
+      ? undefined
+      : eq(products.isNewArrival, query.newArrival),
+    query.trending === undefined
+      ? undefined
+      : eq(products.isTrending, query.trending),
     categorySlugs.length
       ? sql`exists (
           select 1 from ${productCategories}
@@ -273,6 +284,9 @@ export async function listProductRows(
       variantBannerImage: productVariants.bannerImage,
       imageKey: mediaAssets.key,
       imageAlt: mediaAssets.altText,
+      isFeatured: products.isFeatured,
+      isNewArrival: products.isNewArrival,
+      isTrending: products.isTrending,
     })
     .from(products)
     .leftJoin(
@@ -353,6 +367,9 @@ export async function searchProductRows(
       variantBannerImage: productVariants.bannerImage,
       imageKey: mediaAssets.key,
       imageAlt: mediaAssets.altText,
+      isFeatured: products.isFeatured,
+      isNewArrival: products.isNewArrival,
+      isTrending: products.isTrending,
     })
     .from(products)
     .leftJoin(

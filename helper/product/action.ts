@@ -32,6 +32,7 @@ export async function createProduct(input: AdminProductPayload | FormData) {
     );
 
     revalidatePath("/admin/products");
+    revalidatePath(`/product/${created.slug}`);
     return { success: true, message: "Product added successfully", data: created };
   } catch (error) {
     console.error("Create product failed:", error);
@@ -52,6 +53,8 @@ export async function updateProduct(
     );
 
     revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${updated.id}`);
+    revalidatePath(`/product/${updated.slug}`);
     return {
       success: true,
       message: "Product updated successfully",
@@ -172,6 +175,7 @@ export async function duplicateProduct(id: string) {
     );
 
     revalidatePath("/admin/products");
+    revalidatePath(`/product/${created.slug}`);
     return {
       success: true,
       message: "Product duplicated. Redirecting to edit page…",

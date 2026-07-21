@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,41 +12,41 @@ import {
   Plus,
   Star,
   Trash2,
-} from "lucide-react"
-import { ShopMobileFilters } from "./ShopFilters"
-import type { getCatalogFilterOptions } from "@/services/product.service"
+} from "lucide-react";
+import { ShopMobileFilters } from "./ShopFilters";
+import type { getCatalogFilterOptions } from "@/services/product.service";
 import {
   formatPrice,
   productToCartItem,
   type Product,
-} from "@/components/global/const"
-import { useAddToCart } from "@/hooks/useAddToCart"
-import { useWishlist } from "@/hooks/useWishlist"
-import { useCartStore } from "@/store/cartStore"
-import { useWishlistStore } from "@/store/wishlistStore"
+} from "@/components/global/const";
+import { useAddToCart } from "@/hooks/useAddToCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 
-const pageSize = 12
-const visiblePaginationPages = 4
+const pageSize = 12;
+const visiblePaginationPages = 4;
 
 export type ShopCategory = {
-  id?: string
-  name: string
-  slug?: string
-  href?: string
-  image: string
-}
+  id?: string;
+  name: string;
+  slug?: string;
+  href?: string;
+  image: string;
+};
 
 function getVisiblePages(currentPage: number, totalPages: number) {
-  const pageCount = Math.min(visiblePaginationPages, totalPages)
-  const halfWindow = Math.floor(pageCount / 2)
-  let startPage = Math.max(1, currentPage - halfWindow)
-  const endOverflow = startPage + pageCount - 1 - totalPages
+  const pageCount = Math.min(visiblePaginationPages, totalPages);
+  const halfWindow = Math.floor(pageCount / 2);
+  let startPage = Math.max(1, currentPage - halfWindow);
+  const endOverflow = startPage + pageCount - 1 - totalPages;
 
   if (endOverflow > 0) {
-    startPage = Math.max(1, startPage - endOverflow)
+    startPage = Math.max(1, startPage - endOverflow);
   }
 
-  return Array.from({ length: pageCount }, (_, index) => startPage + index)
+  return Array.from({ length: pageCount }, (_, index) => startPage + index);
 }
 
 export default function ShopProducts({
@@ -56,48 +56,35 @@ export default function ShopProducts({
   total,
   currentPage,
 }: {
-  products: Product[]
-  categories: ShopCategory[]
-  filterOptions: Awaited<ReturnType<typeof getCatalogFilterOptions>>
-  total: number
-  currentPage: number
+  products: Product[];
+  categories: ShopCategory[];
+  filterOptions: Awaited<ReturnType<typeof getCatalogFilterOptions>>;
+  total: number;
+  currentPage: number;
 }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "featured")
-  const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1)
-  const pageNumber = Math.min(Math.max(currentPage, 1), totalPages)
-  const visiblePages = getVisiblePages(pageNumber, totalPages)
-  const firstVisiblePage = visiblePages[0] ?? 1
-  const lastVisiblePage = visiblePages[visiblePages.length - 1] ?? totalPages
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, clientWidth } = scrollContainerRef.current
-      const scrollAmount = clientWidth * 0.75
-      scrollContainerRef.current.scrollTo({
-        left: direction === "left" ? scrollLeft - scrollAmount : scrollLeft + scrollAmount,
-        behavior: "smooth",
-      })
-    }
-  }
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "featured");
+  const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+  const pageNumber = Math.min(Math.max(currentPage, 1), totalPages);
+  const visiblePages = getVisiblePages(pageNumber, totalPages);
+  const firstVisiblePage = visiblePages[0] ?? 1;
+  const lastVisiblePage = visiblePages[visiblePages.length - 1] ?? totalPages;
 
   function buildHref(updates: Record<string, string | number | null>) {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === "") {
-        params.delete(key)
-        return
+        params.delete(key);
+        return;
       }
 
-      params.set(key, String(value))
-    })
+      params.set(key, String(value));
+    });
 
-    const query = params.toString()
-    return query ? `${pathname}?${query}` : pathname
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
   }
 
   return (
@@ -107,51 +94,33 @@ export default function ShopProducts({
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-[#111]">
-          All Categories
-        </h2>
-        {categories.length > 0 && (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => scroll("left")}
-              className="flex size-8 items-center justify-center rounded-[3px] border border-[#d8a15a] bg-white text-[#3F2617] transition hover:border-[#c39150] hover:text-[#c39150] cursor-pointer"
-              aria-label="Slide Left"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scroll("right")}
-              className="flex size-8 items-center justify-center rounded-[3px] border border-[#d8a15a] bg-white text-[#3F2617] transition hover:border-[#c39150] hover:text-[#c39150] cursor-pointer"
-              aria-label="Slide Right"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        )}
+        <h2 className="text-sm font-medium text-[#111]">All Categories</h2>
       </div>
 
       {categories.length > 0 ? (
-        <div
-          ref={scrollContainerRef}
-          className="scrollbar-hidden flex max-w-full gap-6 overflow-x-auto pb-2 lg:gap-8"
-        >
-        {categories.map((category, index) => (
-          <Link
-            key={`${category.slug ?? category.name}-${index}`}
-            href={buildHref({ category: category.slug ?? null, page: 1 })}
-            className="block h-auto w-auto shrink-0"
-          >
-          {category.image ? (
-            <Image src={category.image} height={400} width={400} alt={category.name} className=" h-48 w-auto object-contain" unoptimized />
-          ) : (
-            <span className="flex h-48 items-center justify-center bg-[#f8efe6] px-3 text-center text-sm text-[#3f2617]">
-              {category.name}
-            </span>
-          )}
-          </Link>
-        ))}
+        <div className="grid max-w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 md:gap-x-5 lg:grid-cols-3 xl:grid-cols-5">
+          {categories.map((category, index) => (
+            <Link
+              key={`${category.slug ?? category.name}-${index}`}
+              href={buildHref({ category: category.slug ?? null, page: 1 })}
+              className="group block min-w-0"
+            >
+              {category.image ? (
+                <Image
+                  src={category.image}
+                  height={400}
+                  width={400}
+                  alt={category.name}
+                  className="mx-auto h-36 w-full object-contain transition duration-300 group-hover:scale-[1.02] sm:h-40 lg:h-44 xl:h-48"
+                  unoptimized
+                />
+              ) : (
+                <span className="flex h-36 items-center justify-center bg-[#f8efe6] px-3 text-center text-sm text-[#3f2617] sm:h-40 lg:h-44 xl:h-48">
+                  {category.name}
+                </span>
+              )}
+            </Link>
+          ))}
         </div>
       ) : null}
 
@@ -167,7 +136,6 @@ export default function ShopProducts({
       {products.length > 0 ? (
         <div className="mt-6 grid min-w-0 grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-3 md:gap-x-5 md:gap-y-8 lg:mt-4 xl:grid-cols-4">
           {products.map((product) => (
-          
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -245,7 +213,7 @@ export default function ShopProducts({
         </Link>
       </div>
     </section>
-  )
+  );
 }
 
 function SortControl({
@@ -253,9 +221,9 @@ function SortControl({
   onSortChange,
   compact = false,
 }: {
-  sortBy: string
-  onSortChange: (value: string) => void
-  compact?: boolean
+  sortBy: string;
+  onSortChange: (value: string) => void;
+  compact?: boolean;
 }) {
   return (
     <label
@@ -267,11 +235,11 @@ function SortControl({
       <select
         value={sortBy}
         onChange={(event) => {
-          onSortChange(event.target.value)
-          const params = new URLSearchParams(window.location.search)
-          params.set("sort", event.target.value)
-          params.set("page", "1")
-          window.location.href = `${window.location.pathname}?${params.toString()}`
+          onSortChange(event.target.value);
+          const params = new URLSearchParams(window.location.search);
+          params.set("sort", event.target.value);
+          params.set("page", "1");
+          window.location.href = `${window.location.pathname}?${params.toString()}`;
         }}
         className={`rounded-[2px] border border-[#d8a15a] bg-white px-3 font-normal text-[#c39150] outline-none ${
           compact ? "h-9 w-[92px] text-xs" : "h-8 min-w-28 text-xs"
@@ -283,7 +251,7 @@ function SortControl({
         <option value="price-high">Price High</option>
       </select>
     </label>
-  )
+  );
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -292,21 +260,20 @@ function ProductCard({ product }: { product: Product }) {
     handleDecreaseCartItem,
     handleIncreaseCartItem,
     handleRemoveCartItem,
-  } = useAddToCart()
-  const { handleToggleWishlist } = useWishlist()
-  const storeItem = productToCartItem(product)
-  const cartQuantity = useCartStore(
-    (state) =>
-      state.getItemQuantity(
-        storeItem.productId,
-        storeItem.attributes,
-        storeItem.variantId
-      )
-  )
+  } = useAddToCart();
+  const { handleToggleWishlist } = useWishlist();
+  const storeItem = productToCartItem(product);
+  const cartQuantity = useCartStore((state) =>
+    state.getItemQuantity(
+      storeItem.productId,
+      storeItem.attributes,
+      storeItem.variantId,
+    ),
+  );
   const isWishlisted = useWishlistStore((state) =>
-    state.hasItem(storeItem.productId, storeItem.dbProductId)
-  )
-  const isInCart = cartQuantity > 0
+    state.hasItem(storeItem.productId, storeItem.dbProductId),
+  );
+  const isInCart = cartQuantity > 0;
 
   return (
     <article className="group min-w-0">
@@ -338,7 +305,10 @@ function ProductCard({ product }: { product: Product }) {
             isWishlisted ? "md:opacity-100" : ""
           }`}
         >
-          <Heart className="size-4" fill={isWishlisted ? "currentColor" : "none"} />
+          <Heart
+            className="size-4"
+            fill={isWishlisted ? "currentColor" : "none"}
+          />
         </button>
         <div
           className={`absolute inset-x-2 bottom-2 z-10 transition duration-300 md:inset-x-3 md:bottom-3 ${
@@ -359,7 +329,7 @@ function ProductCard({ product }: { product: Product }) {
             <button
               type="button"
               onClick={() => handleAddToCart(storeItem)}
-              className="h-10 w-full rounded-[4px] bg-[#C39150] text-sm font-semibold tracking-[0.12em] text-white shadow-lg shadow-black/10"
+              className="h-8 w-full rounded-[4px] bg-[#C39150] text-sm font-semibold md:tracking-[0.12em] text-white shadow-lg shadow-black/10"
             >
               Add to Cart
             </button>
@@ -383,7 +353,7 @@ function ProductCard({ product }: { product: Product }) {
         </p>
       </Link>
     </article>
-  )
+  );
 }
 
 function CartQuantityControls({
@@ -393,11 +363,11 @@ function CartQuantityControls({
   onIncrease,
   onRemove,
 }: {
-  quantity: number
-  productName: string
-  onDecrease: () => void
-  onIncrease: () => void
-  onRemove: () => void
+  quantity: number;
+  productName: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  onRemove: () => void;
 }) {
   return (
     <div className="grid h-10 grid-cols-[40px_1fr_40px_40px] overflow-hidden rounded-[4px] bg-white text-[#3F2617] shadow-lg shadow-black/10">
@@ -429,5 +399,5 @@ function CartQuantityControls({
         <Trash2 className="size-4" />
       </button>
     </div>
-  )
+  );
 }

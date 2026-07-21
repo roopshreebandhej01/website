@@ -1,35 +1,48 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { count, sum } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { orders } from "@/db/schema/orders";
 import { users } from "@/db/schema/users";
 import { products } from "@/db/schema/products";
 
+const dashboardStatsFallback = {
+  totalProducts: 0,
+  totalOrders: 0,
+  totalUsers: 0,
+  totalRevenue: 0,
+};
+
 export async function getDashboardStats() {
-  const [
-    productsResult,
-    ordersResult,
-    usersResult,
-    revenueResult,
-  ] = await Promise.all([
-    db.select({ value: count() }).from(products),
-    db.select({ value: count() }).from(orders),
-    db.select({ value: count() }).from(users),
-    db.select({ value: sum(orders.totalAmount) }).from(orders),
-  ]);
+  try {
+    const [stats] = await Promise.race([
+      db.execute<{
+        totalProducts: number;
+        totalOrders: number;
+        totalUsers: number;
+        totalRevenueInPaise: string | number | null;
+      }>(sql`
+        select
+          (select count(*)::int from ${products}) as "totalProducts",
+          (select count(*)::int from ${orders}) as "totalOrders",
+          (select count(*)::int from ${users}) as "totalUsers",
+          (select coalesce(sum(${orders.totalAmount}), 0) from ${orders}) as "totalRevenueInPaise"
+      `),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Dashboard stats timed out")), 4_000);
+      }),
+    ]);
 
-  const totalProducts = productsResult[0]?.value ?? 0;
-  const totalOrders = ordersResult[0]?.value ?? 0;
-  const totalUsers = usersResult[0]?.value ?? 0;
-  // totalAmount is in paise (cents), so we divide by 100 to get the correct currency unit
-  const totalRevenueInPaise = Number(revenueResult[0]?.value ?? 0);
-  const totalRevenue = totalRevenueInPaise / 100;
+    const totalRevenueInPaise = Number(stats?.totalRevenueInPaise ?? 0);
 
-  return {
-    totalProducts,
-    totalOrders,
-    totalUsers,
-    totalRevenue,
-  };
+    return {
+      totalProducts: stats?.totalProducts ?? 0,
+      totalOrders: stats?.totalOrders ?? 0,
+      totalUsers: stats?.totalUsers ?? 0,
+      totalRevenue: totalRevenueInPaise / 100,
+    };
+  } catch (error) {
+    console.error("Dashboard stats failed:", error);
+    return dashboardStatsFallback;
+  }
 }

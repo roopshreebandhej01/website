@@ -51,6 +51,7 @@ type VariantRow = {
 type ProductDetails = {
   id?: string;
   name?: string;
+  slug?: string;
   sku?: string;
   shortDescription?: string | null;
   description?: string | null;
@@ -58,6 +59,8 @@ type ProductDetails = {
   strikeThroughPrice?: number | null;
   status?: ProductStatus;
   isFeatured?: boolean;
+  isNewArrival?: boolean;
+  isTrending?: boolean;
   categoryRes?: { categories: { id: string } }[];
   productAttributeRes?: { name?: string; attribute?: string; value: string }[];
   productMediaRes?: {
@@ -126,6 +129,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   );
 
   const [name, setName] = useState(product?.name ?? "");
+  const [slug, setSlug] = useState(product?.slug ?? "");
   const [sku, setSku] = useState(product?.sku ?? "");
   const [shortDescription, setShortDescription] = useState(
     product?.shortDescription ?? "",
@@ -137,6 +141,8 @@ export default function ProductForm({ product }: ProductFormProps) {
   );
   const [status, setStatus] = useState<ProductStatus>(product?.status ?? "draft");
   const [isFeatured, setIsFeatured] = useState(Boolean(product?.isFeatured));
+  const [isNewArrival, setIsNewArrival] = useState(Boolean(product?.isNewArrival));
+  const [isTrending, setIsTrending] = useState(Boolean(product?.isTrending));
   const [categoryIds, setCategoryIds] = useState(initialCategories);
   const [attributes, setAttributes] = useState<AttributeRow[]>(
     product?.productAttributeRes?.map((item) => ({
@@ -223,6 +229,7 @@ export default function ProductForm({ product }: ProductFormProps) {
 
     const payload = {
       name,
+      slug,
       sku,
       shortDescription,
       description,
@@ -230,6 +237,8 @@ export default function ProductForm({ product }: ProductFormProps) {
       strikeThroughPrice,
       status,
       isFeatured,
+      isNewArrival,
+      isTrending,
       categoryIds,
       attributes: attributes.filter((item) => item.name && item.value),
       filters: filters.filter((item) => item.name && item.value),
@@ -250,7 +259,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       if (result.success) {
         toast.success(result.message);
         router.push("/admin/products");
-        router.refresh();
         return;
       }
 
@@ -538,6 +546,13 @@ export default function ProductForm({ product }: ProductFormProps) {
               <Field label="Name">
                 <Input value={name} onChange={(event) => setName(event.target.value)} required />
               </Field>
+              <Field label="Slug">
+                <Input
+                  value={slug}
+                  onChange={(event) => setSlug(event.target.value)}
+                  placeholder="product-url-slug"
+                />
+              </Field>
               {/* <Field label="SKU">
                 <Input value={sku} onChange={(event) => setSku(event.target.value)} required />
               </Field>
@@ -614,6 +629,22 @@ export default function ProductForm({ product }: ProductFormProps) {
                   onChange={(event) => setIsFeatured(event.target.checked)}
                 />
                 Featured product
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isNewArrival}
+                  onChange={(event) => setIsNewArrival(event.target.checked)}
+                />
+                Show in New Arrival
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isTrending}
+                  onChange={(event) => setIsTrending(event.target.checked)}
+                />
+                Show in Trending
               </label>
             </CardContent>
           </Card>
