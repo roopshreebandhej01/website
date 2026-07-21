@@ -10,6 +10,9 @@ export type Product = {
   reviewCount?: number
   image: string
   imageClass?: string
+  isFeatured?: boolean
+  isNewArrival?: boolean
+  isTrending?: boolean
 }
 
 export function productToCartItem(product: Product) {

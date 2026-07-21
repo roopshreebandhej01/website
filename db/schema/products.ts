@@ -53,6 +53,8 @@ export const products = pgTable(
     strikeThroughPrice: integer('strike_through_price'),
     status: productStatusEnum('status').default('draft').notNull(),
     isFeatured: boolean('is_featured').default(false).notNull(),
+    isNewArrival: boolean('is_new_arrival').default(false).notNull(),
+    isTrending: boolean('is_trending').default(false).notNull(),
     rating: integer('rating').default(0).notNull(),
     reviewCount: integer('review_count').default(0).notNull(),
     ...timestamps,

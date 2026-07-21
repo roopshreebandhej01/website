@@ -43,7 +43,13 @@ export function parseAdminProductInput(
 }
 
 export function getPrimaryAdminProductVariant(payload: AdminProductPayload) {
-  if (Array.isArray(payload.variants)) return payload
+  if (Array.isArray(payload.variants)) {
+    return (
+      payload.variants.find((variant) => Boolean(variant?.isDefault)) ??
+      payload.variants[0] ??
+      payload
+    )
+  }
 
   return payload.variants ?? payload.variant ?? payload
 }

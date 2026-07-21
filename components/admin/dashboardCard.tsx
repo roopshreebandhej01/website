@@ -1,5 +1,5 @@
 // components/dashboard-cards.tsx
-import { ShoppingCart, Package, Users, DollarSign, IndianRupee } from "lucide-react"
+import { ShoppingCart, Package, Users, IndianRupee } from "lucide-react"
 import { StatCard } from "./statCard"
 import { getDashboardStats } from "@/helper/dashboard/action"
 

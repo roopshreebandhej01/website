@@ -50,7 +50,13 @@ function normalizeImage(item: any) {
 }
 
 function getPrimaryVariant(payload: AdminProductPayload) {
-  if (Array.isArray(payload.variants)) return payload
+  if (Array.isArray(payload.variants)) {
+    return (
+      payload.variants.find((variant) => Boolean(variant?.isDefault)) ??
+      payload.variants[0] ??
+      payload
+    )
+  }
 
   return payload.variants ?? payload.variant ?? payload
 }
@@ -125,7 +131,7 @@ async function replaceProductFilters(tx: any, productId: string, filters: any[])
 }
 
 function normalizeVariants(variants: any[]) {
-  return (variants ?? [])
+  const normalized = (variants ?? [])
     .map((variant, index) => ({
       source: variant,
       value: {
@@ -148,6 +154,17 @@ function normalizeVariants(variants: any[]) {
       },
     }))
     .filter((variant) => variant.value.sku && variant.value.title)
+
+  const defaultIndex = normalized.findIndex((variant) => variant.value.isDefault)
+  const normalizedDefaultIndex = defaultIndex === -1 ? 0 : defaultIndex
+
+  return normalized.map((variant, index) => ({
+    ...variant,
+    value: {
+      ...variant.value,
+      isDefault: index === normalizedDefaultIndex,
+    },
+  }))
 }
 
 async function replaceProductVariants(tx: any, productId: string, variants: any[]) {
@@ -179,26 +196,31 @@ async function replaceProductMedia(
 ) {
   await tx.delete(productMedia).where(eq(productMedia.productId, productId))
 
-  // Collect all image entries across variants
+  // Collect all image entries across variants, ignoring repeated keys per variant.
   const allEntries: { variantId: string; key: string; index: number }[] = []
   for (const variant of variants) {
+    const seenVariantKeys = new Set<string>()
     const imageKeys = [
       normalizeImage(variant.source.banner),
       ...(variant.source.gallery ?? []).map(normalizeImage),
     ].filter(Boolean) as string[]
 
     imageKeys.forEach((key, index) => {
+      if (seenVariantKeys.has(key)) return
+      seenVariantKeys.add(key)
       allEntries.push({ variantId: variant.id, key, index })
     })
   }
 
   if (!allEntries.length) return
 
+  const assetKeys = Array.from(new Set(allEntries.map(({ key }) => key)))
+
   // Batch upsert all mediaAssets in ONE query
   const insertedAssets = await tx
     .insert(mediaAssets)
     .values(
-      allEntries.map(({ key }) => ({
+      assetKeys.map((key) => ({
         key,
         contentType: 'image/*',
         ownerType: 'product',
@@ -227,6 +249,66 @@ async function replaceProductMedia(
   )
 }
 
+type ProductBaseValues = {
+  name: string
+  sku: string
+  slug: string
+  shortDescription: string | null
+  description: string | null
+  basePrice: number
+  strikeThroughPrice: number | null
+  status: 'draft' | 'active' | 'archived'
+  isFeatured: boolean
+  isNewArrival: boolean
+  isTrending: boolean
+  updatedAt?: Date
+}
+
+async function resolveProductSlug(
+  tx: any,
+  slug: string,
+  excludedProductId?: string,
+) {
+  const filters = [
+    eq(products.slug, slug),
+    excludedProductId ? ne(products.id, excludedProductId) : undefined,
+  ]
+
+  const [result] = await tx
+    .select({ value: count() })
+    .from(products)
+    .where(and(...filters))
+
+  const exactSlugCount = Number(result?.value ?? 0)
+
+  return exactSlugCount === 0 ? slug : `${slug}-${exactSlugCount}`
+}
+
+async function assertProductSkuAvailable({
+  tx,
+  sku,
+  excludedProductId,
+}: {
+  tx: any
+  sku: string
+  excludedProductId?: string
+}) {
+  const filters = [
+    eq(products.sku, sku),
+    excludedProductId ? ne(products.id, excludedProductId) : undefined,
+  ]
+
+  const [existingSku] = await tx
+    .select({ id: products.id })
+    .from(products)
+    .where(and(...filters))
+    .limit(1)
+
+  if (existingSku) {
+    throw new Error('Product SKU already exists.')
+  }
+}
+
 export async function findProductsPage(query: AdminProductQuery) {
   const page = Math.max(1, Number(query.page ?? 1))
   const pageSize = Math.max(1, Number(query.pageSize ?? 10))
@@ -250,6 +332,8 @@ export async function findProductsPage(query: AdminProductQuery) {
       strikeThroughPrice: products.strikeThroughPrice,
       status: products.status,
       isFeatured: products.isFeatured,
+      isNewArrival: products.isNewArrival,
+      isTrending: products.isTrending,
       createdAt: products.createdAt,
       updatedAt: products.updatedAt,
       imageKey: mediaAssets.key,
@@ -336,198 +420,76 @@ export async function findFullProduct(id: string) {
 export async function insertAdminProduct(
   payload: AdminProductPayload,
   categoryIds: string[],
-  baseValues: {
-    name: string
-    sku: string
-    slug: string
-    shortDescription: string | null
-    description: string | null
-    basePrice: number
-    strikeThroughPrice: number | null
-    status: 'draft' | 'active' | 'archived'
-    isFeatured: boolean
-  },
+  baseValues: ProductBaseValues,
 ) {
-  let attempt = 1
-  const originalSlug = baseValues.slug
-  const originalSku = baseValues.sku
+  return db.transaction(async (tx) => {
+    const slug = await resolveProductSlug(tx, baseValues.slug)
+    await assertProductSkuAvailable({ tx, sku: baseValues.sku })
 
-  let currentSlug = originalSlug
-  let currentSku = originalSku
+    const [created] = await tx
+      .insert(products)
+      .values({ ...baseValues, slug })
+      .returning()
 
-  while (true) {
-    try {
-      return await db.transaction(async (tx) => {
-        // First check if slug already exists to prevent hitting constraint unnecessarily
-        const [existingSlug] = await tx
-          .select({ id: products.id })
-          .from(products)
-          .where(eq(products.slug, currentSlug))
-          .limit(1)
+    const variant = getPrimaryVariant(payload)
 
-        if (existingSlug) {
-          throw new Error('SLUG_EXISTS')
-        }
+    await replaceProductCategories(tx, created.id, categoryIds)
+    await replaceProductAttributes(
+      tx,
+      created.id,
+      payload.attributes ?? variant.attributes ?? {},
+    )
+    const variants = await replaceProductVariants(tx, created.id, payload.variants ?? [])
+    await replaceProductFilters(tx, created.id, payload.filters ?? [])
+    await replaceProductMedia(tx, created.id, variants)
 
-        // Check if SKU already exists
-        const [existingSku] = await tx
-          .select({ id: products.id })
-          .from(products)
-          .where(eq(products.sku, currentSku))
-          .limit(1)
-
-        if (existingSku) {
-          throw new Error('SKU_EXISTS')
-        }
-
-        const [created] = await tx
-          .insert(products)
-          .values({ ...baseValues, slug: currentSlug, sku: currentSku })
-          .returning()
-
-        const variant = getPrimaryVariant(payload)
-
-        await replaceProductCategories(tx, created.id, categoryIds)
-        await replaceProductAttributes(
-          tx,
-          created.id,
-          payload.attributes ?? variant.attributes ?? {},
-        )
-        const variants = await replaceProductVariants(tx, created.id, payload.variants ?? [])
-        await replaceProductFilters(tx, created.id, payload.filters ?? [])
-        await replaceProductMedia(tx, created.id, variants)
-
-        return created
-      })
-    } catch (error: any) {
-      const isSlugUniqueConstraintViolation =
-        error?.code === '23505' &&
-        (error?.detail?.includes('slug') ||
-          error?.constraint === 'products_slug_idx' ||
-          error?.message?.includes('products_slug_idx'))
-
-      const isSkuUniqueConstraintViolation =
-        error?.code === '23505' &&
-        (error?.detail?.includes('sku') ||
-          error?.constraint === 'products_sku_idx' ||
-          error?.message?.includes('products_sku_idx'))
-
-      const isSlugExistsError = error?.message === 'SLUG_EXISTS'
-      const isSkuExistsError = error?.message === 'SKU_EXISTS'
-
-      if (
-        isSlugExistsError ||
-        isSlugUniqueConstraintViolation ||
-        isSkuExistsError ||
-        isSkuUniqueConstraintViolation
-      ) {
-        attempt++
-        currentSlug = `${originalSlug}-${attempt}`
-        currentSku = `${originalSku}-${attempt}`
-        continue
-      }
-
-      throw error
-    }
-  }
+    return created
+  })
 }
 
 export async function updateAdminProduct(
   id: string,
   payload: AdminProductPayload,
   categoryIds: string[],
-  baseValues: {
-    name: string
-    sku: string
-    slug: string
-    shortDescription: string | null
-    description: string | null
-    basePrice: number
-    strikeThroughPrice: number | null
-    status: 'draft' | 'active' | 'archived'
-    isFeatured: boolean
-    updatedAt: Date
-  },
+  baseValues: ProductBaseValues & { updatedAt: Date },
 ) {
-  let attempt = 1
-  const originalSlug = baseValues.slug
-  const originalSku = baseValues.sku
+  return db.transaction(async (tx) => {
+    const [currentProduct] = await tx
+      .select({ slug: products.slug })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1)
 
-  let currentSlug = originalSlug
-  let currentSku = originalSku
-
-  while (true) {
-    try {
-      return await db.transaction(async (tx) => {
-        // Check if slug is taken by any OTHER product
-        const [existingSlug] = await tx
-          .select({ id: products.id })
-          .from(products)
-          .where(and(eq(products.slug, currentSlug), ne(products.id, id)))
-          .limit(1)
-
-        if (existingSlug) {
-          throw new Error('SLUG_EXISTS')
-        }
-
-        // Check if SKU is taken by any OTHER product
-        const [existingSku] = await tx
-          .select({ id: products.id })
-          .from(products)
-          .where(and(eq(products.sku, currentSku), ne(products.id, id)))
-          .limit(1)
-
-        if (existingSku) {
-          throw new Error('SKU_EXISTS')
-        }
-
-        const [updated] = await tx
-          .update(products)
-          .set({ ...baseValues, slug: currentSlug, sku: currentSku })
-          .where(eq(products.id, id))
-          .returning()
-
-        const variant = getPrimaryVariant(payload)
-
-        await replaceProductCategories(tx, id, categoryIds)
-        await replaceProductAttributes(tx, id, payload.attributes ?? variant.attributes ?? {})
-        const variants = await replaceProductVariants(tx, id, payload.variants ?? [])
-        await replaceProductFilters(tx, id, payload.filters ?? [])
-        await replaceProductMedia(tx, id, variants)
-
-        return updated
-      })
-    } catch (error: any) {
-      const isSlugUniqueConstraintViolation =
-        error?.code === '23505' &&
-        (error?.detail?.includes('slug') ||
-          error?.constraint === 'products_slug_idx' ||
-          error?.message?.includes('products_slug_idx'))
-
-      const isSkuUniqueConstraintViolation =
-        error?.code === '23505' &&
-        (error?.detail?.includes('sku') ||
-          error?.constraint === 'products_sku_idx' ||
-          error?.message?.includes('products_sku_idx'))
-
-      const isSlugExistsError = error?.message === 'SLUG_EXISTS'
-      const isSkuExistsError = error?.message === 'SKU_EXISTS'
-
-      if (
-        isSlugExistsError ||
-        isSlugUniqueConstraintViolation ||
-        isSkuExistsError ||
-        isSkuUniqueConstraintViolation
-      ) {
-        attempt++
-        currentSlug = `${originalSlug}-${attempt}`
-        currentSku = `${originalSku}-${attempt}`
-        continue
-      }
-
-      throw error
+    if (!currentProduct) {
+      throw new Error('Product not found')
     }
-  }
+
+    const hasSubmittedSlug =
+      typeof payload.slug === 'string' && payload.slug.trim() !== ''
+    const shouldUpdateSlug =
+      hasSubmittedSlug && baseValues.slug !== currentProduct.slug
+    const slug = shouldUpdateSlug
+      ? await resolveProductSlug(tx, baseValues.slug, id)
+      : currentProduct.slug
+
+    await assertProductSkuAvailable({ tx, sku: baseValues.sku, excludedProductId: id })
+
+    const [updated] = await tx
+      .update(products)
+      .set({ ...baseValues, slug })
+      .where(eq(products.id, id))
+      .returning()
+
+    const variant = getPrimaryVariant(payload)
+
+    await replaceProductCategories(tx, id, categoryIds)
+    await replaceProductAttributes(tx, id, payload.attributes ?? variant.attributes ?? {})
+    const variants = await replaceProductVariants(tx, id, payload.variants ?? [])
+    await replaceProductFilters(tx, id, payload.filters ?? [])
+    await replaceProductMedia(tx, id, variants)
+
+    return updated
+  })
 }
 
 export async function deleteAdminProduct(id: string) {

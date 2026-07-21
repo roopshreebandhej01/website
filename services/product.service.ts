@@ -24,6 +24,7 @@ import type { ProductPayload } from '@/validators/product.validator'
 import { listReviewMediaRows } from '@/repositories/review.repository'
 
 export const CATALOG_CATEGORIES_CACHE_TAG = 'catalog-categories'
+const isProductionBuild = process.env.NEXT_PHASE === 'phase-production-build'
 
 const getCachedCategoryRows = unstable_cache(
   async (limit: number) => listCategoryRows(limit),
@@ -73,6 +74,9 @@ function mapProductRow(row: ProductListRow) {
     reviewCount: row.reviewCount,
     image,
     imageClass: 'object-top',
+    isFeatured: row.isFeatured,
+    isNewArrival: row.isNewArrival,
+    isTrending: row.isTrending,
   }
 }
 
@@ -109,7 +113,27 @@ export async function getRecommendedProducts(limit = 5) {
   })
 }
 
+export async function getNewArrivalProducts(limit = 5) {
+  return getCatalogProducts({
+    newArrival: true,
+    limit,
+    sortBy: 'newest',
+  })
+}
+
+export async function getTrendingProducts(limit = 5) {
+  return getCatalogProducts({
+    trending: true,
+    limit,
+    sortBy: 'newest',
+  })
+}
+
 export async function getCatalogCategories(limit = 8) {
+  if (isProductionBuild) {
+    return []
+  }
+
   const rows = await getCachedCategoryRows(limit)
 
   return rows.map((category) => ({
@@ -181,7 +205,7 @@ function getFilterParamKey(name: string) {
 
 export async function getCatalogFilterOptions() {
   const [categories, variants, customFilters, priceRange] = await Promise.all([
-    listCategoryRows(100),
+    isProductionBuild ? [] : getCachedCategoryRows(100),
     listVariantFilterOptionRows(),
     listCatalogProductFilterOptionRows(),
     getCatalogProductPriceRange(),

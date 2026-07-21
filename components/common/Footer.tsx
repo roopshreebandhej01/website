@@ -26,16 +26,20 @@ const customerServices: FooterLink[] = [
   { label: "Returns & Refunds", href: "/returns-policy" },
 ];
 
+const isProductionBuild = process.env.NEXT_PHASE === "phase-production-build";
+
 const Footer = async () => {
   let categories: FooterLink[] = [];
 
-  try {
-    categories = (await getCatalogCategories(7)).map((category) => ({
-      label: category.name,
-      href: category.href,
-    }));
-  } catch (error) {
-    console.error("Footer categories failed:", error);
+  if (!isProductionBuild) {
+    try {
+      categories = (await getCatalogCategories(7)).map((category) => ({
+        label: category.name,
+        href: category.href,
+      }));
+    } catch (error) {
+      console.error("Footer categories failed:", error);
+    }
   }
 
   return (

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import NewsletterSection from "@/components/shop/Newsletter";
 import HeroSection from "@/components/shop/Hero";
 import ShopFilters from "@/components/shop/ShopFilters";
 import ShopProducts from "@/components/shop/ShopProducts";
@@ -71,11 +70,11 @@ function ShopCatalogLoader() {
         ))}
       </aside>
       <section className="min-w-0">
-        <div className="mb-6 flex gap-6 overflow-hidden">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="mb-6 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 md:gap-x-5 lg:grid-cols-3 xl:grid-cols-5">
+          {Array.from({ length: 8 }).map((_, index) => (
             <div
               key={index}
-              className="h-48 w-36 shrink-0 animate-pulse rounded-[4px] bg-[#f4eadf]"
+              className="h-36 animate-pulse rounded-[4px] bg-[#f4eadf] sm:h-40 lg:h-44 xl:h-48"
             />
           ))}
         </div>
