@@ -96,19 +96,9 @@ export default function ReturnsPolicy() {
                 </h2>
               </div>
               <ul className="list-none space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] border">•</span>
-                  <span>
-                    Orders may be cancelled before dispatch by contacting our
-                    customer support.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Once dispatched, cancellation requests cannot be accepted.
-                  </span>
-                </li>
+                <li>Orders may be cancelled before dispatch by contacting our
+                    customer support.</li>
+                <li>Once dispatched, cancellation requests cannot be accepted.</li>
               </ul>
             </section>
 
@@ -126,19 +116,10 @@ export default function ReturnsPolicy() {
                 As our products include handcrafted, traditional, and textile
                 items, returns are accepted only in the following situations:
               </p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-1.5">•</span>
-                  <span>Wrong product received</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-1.5">•</span>
-                  <span>Damaged product received</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-1.5">•</span>
-                  <span>Manufacturing defect</span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Wrong product received</li>
+                <li>Damaged product received</li>
+                <li>Manufacturing defect</li>
               </ul>
             </section>
 
@@ -162,19 +143,9 @@ export default function ReturnsPolicy() {
                     <strong>48 hours</strong> of delivery.
                   </span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    The product must be unused, unwashed, and in its original
-                    packaging with all tags intact.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Clear photos or videos may be required for verification.
-                  </span>
-                </li>
+                <li>The product must be unused, unwashed, and in its original
+                    packaging with all tags intact.</li>
+                <li>Clear photos or videos may be required for verification.</li>
               </ul>
             </section>
 
@@ -189,30 +160,13 @@ export default function ReturnsPolicy() {
                 </h2>
               </div>
               <p className="mb-3">Returns will not be accepted for:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Customized or personalized products</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Used or washed products</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Products damaged after delivery</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Slight colour variations due to photography or screen
-                    settings
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Natural variations in handcrafted products</span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Customized or personalized products</li>
+                <li>Used or washed products</li>
+                <li>Products damaged after delivery</li>
+                <li>Slight colour variations due to photography or screen
+                    settings</li>
+                <li>Natural variations in handcrafted products</li>
               </ul>
             </section>
 
@@ -227,27 +181,12 @@ export default function ReturnsPolicy() {
                 </h2>
               </div>
               <p className="mb-3">After inspection and approval:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Refunds will be processed within{" "}
-                    <strong>5–7 business days</strong>.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Refunds will be made to the original payment method.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Shipping charges are generally non-refundable unless the
-                    error is from our side.
-                  </span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Refunds will be processed within{" "}
+                    <strong>5–7 business days</strong>.</li>
+                <li>Refunds will be made to the original payment method.</li>
+                <li>Shipping charges are generally non-refundable unless the
+                    error is from our side.</li>
               </ul>
             </section>
 
@@ -355,12 +294,12 @@ export default function ReturnsPolicy() {
                         WhatsApp
                       </h4>
                       <a
-                        href="https://wa.me/919529888006"
+                        href="https://wa.me/917627028842"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
                       >
-                        Chat on WhatsApp (+91 95298 88006)
+                        Chat on WhatsApp (+91 7627028842)
                       </a>
                     </div>
                   </div>

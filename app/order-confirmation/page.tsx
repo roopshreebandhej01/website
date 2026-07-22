@@ -10,15 +10,14 @@ export default async function Page({
   searchParams: Promise<{ orderId?: string }>
 }) {
   const session = await getCurrentSession()
-
-  if (!session) {
-    redirect("/auth?callbackUrl=/order-confirmation")
-  }
-
   const { orderId } = await searchParams
 
   if (!orderId) {
-    redirect("/dashboard/orders")
+    if (session) {
+      redirect("/dashboard/orders")
+    } else {
+      redirect("/")
+    }
   }
 
   const details = await getOrderConfirmationDetails(orderId)

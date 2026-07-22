@@ -1,5 +1,5 @@
 {
-  "id": "bbf1f7af-5034-424e-bae1-6cb70ceeceda",
+  "id": "c24c5164-873e-4f24-b4e6-0245be13ca58",
   "prevId": "bc904a26-e64f-4dd0-9fd0-1eff4496d149",
   "version": "7",
   "dialect": "postgresql",
@@ -2110,20 +2110,6 @@
           "notNull": true,
           "default": false
         },
-        "is_new_arrival": {
-          "name": "is_new_arrival",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_trending": {
-          "name": "is_trending",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "rating": {
           "name": "rating",
           "type": "integer",
@@ -2809,7 +2795,7 @@
           "name": "cognito_sub",
           "type": "varchar(128)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "name": {
           "name": "name",

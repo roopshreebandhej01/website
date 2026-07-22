@@ -106,27 +106,12 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <ul className="list-none space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    We strive to display products as accurately as possible.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Due to different screen settings, slight variations in color
-                    may occur.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    As many of our products are handcrafted, slight
+                <li>We strive to display products as accurately as possible.</li>
+                <li>Due to different screen settings, slight variations in color
+                    may occur.</li>
+                <li>As many of our products are handcrafted, slight
                     irregularities in dyeing, weaving, embroidery, zari work, or
-                    handwork are natural and should not be considered defects.
-                  </span>
-                </li>
+                    handwork are natural and should not be considered defects.</li>
               </ul>
             </section>
 
@@ -141,22 +126,9 @@ export default function TermsAndConditions() {
                 </h2>
               </div>
               <ul className="list-none space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>All prices are in Indian Rupees (INR).</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Prices are subject to change without prior notice.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Applicable taxes, if any, will be charged at checkout.
-                  </span>
-                </li>
+                <li>All prices are in Indian Rupees (INR).</li>
+                <li>Prices are subject to change without prior notice.</li>
+                <li>Applicable taxes, if any, will be charged at checkout.</li>
               </ul>
             </section>
 
@@ -174,27 +146,12 @@ export default function TermsAndConditions() {
                 Roop Shree reserves the right to accept, reject, or cancel any
                 order due to:
               </p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Product unavailability</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Pricing errors</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Payment issues</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Suspected fraudulent transactions</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Incorrect customer information</span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Product unavailability</li>
+                <li>Pricing errors</li>
+                <li>Payment issues</li>
+                <li>Suspected fraudulent transactions</li>
+                <li>Incorrect customer information</li>
               </ul>
             </section>
 
@@ -356,12 +313,12 @@ export default function TermsAndConditions() {
                         WhatsApp
                       </h4>
                       <a
-                        href="https://wa.me/919529888006"
+                        href="https://wa.me/917627028842"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
                       >
-                        Chat on WhatsApp (+91 95298 88006)
+                        Chat on WhatsApp (+91 7627028842)
                       </a>
                     </div>
                   </div>

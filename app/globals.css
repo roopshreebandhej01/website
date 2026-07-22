@@ -198,6 +198,16 @@
   select {
     font-family: var(--font-subheading);
   }
+
+  button:not(.rounded-full),
+  [role="button"]:not(.rounded-full),
+  [data-slot="button"]:not(.rounded-full) {
+    border-radius: 2px !important;
+  }
+
+  li.flex.items-start.gap-2 > span:first-child {
+    flex-shrink: 0;
+  }
 }
 
 @layer utilities {

@@ -99,8 +99,10 @@ export async function upsertUserFromAuthClaims({
     const [updated] = await db
       .update(users)
       .set({
+        cognitoSub: existing.cognitoSub || cognitoSub,
         name: name?.trim() || existing.name,
         phone: phone ?? existing.phone,
+        emailVerified: true,
         updatedAt: new Date(),
       })
       .where(eq(users.email, email))

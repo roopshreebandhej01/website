@@ -22,19 +22,19 @@ const HeroSection = () => {
         sizes="100vw"
         className="hidden object-cover object-center md:block"
       />
-      <div className="md:hidden">
+      <div className="relative aspect-[1023/1450] overflow-hidden md:hidden">
         <Image
           src="/new_banners/image 276.png"
           alt="Roop Shree Bandhej contact hero"
-          width={887}
-          height={1774}
+          fill
           priority
           sizes="100vw"
-          className="block h-auto w-full"
+          className="object-cover object-center"
         />
       </div>
+      <div className="absolute inset-0 z-[1] bg-white/15 md:hidden" />
 
-      <div className="absolute inset-x-0 top-0 mx-auto flex max-w-7xl items-start px-3.5 pt-10 sm:px-6 md:relative md:min-h-svh md:items-center md:px-8 md:py-20 lg:px-8">
+      <div className="absolute inset-x-0 top-0 z-[3] mx-auto flex max-w-7xl items-start px-3.5 pt-10 sm:px-6 md:relative md:min-h-svh md:items-center md:px-8 md:py-20 lg:px-8">
         <motion.div
           initial="hidden"
           animate="visible"

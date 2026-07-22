@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { and, count, desc, eq, ilike, or } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, or, sql } from 'drizzle-orm'
 import { orders, orderItems, payments } from '@/db/schema/orders'
 import { users } from '@/db/schema/users'
 import { db } from '@/lib/db'
@@ -23,7 +23,7 @@ export async function findOrdersPage(query: OrderQuery) {
 
   if (query.search?.trim()) {
     const search = `%${query.search.trim()}%`
-    filters.push(or(ilike(orders.id, search), ilike(orders.orderNumber, search)))
+    filters.push(or(sql`${orders.id}::text ILIKE ${search}`, ilike(orders.orderNumber, search)))
   }
 
   const where = filters.length ? and(...filters) : undefined

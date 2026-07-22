@@ -1,5 +1,5 @@
 import { ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET, USER_POOL_ID } from '@/config/env';
-import { AdminGetUserCommand, AdminUpdateUserAttributesCommand, AuthFlowType, ChangePasswordCommand, CognitoIdentityProviderClient, ConfirmForgotPasswordCommand, ConfirmSignUpCommand, ForgotPasswordCommand, InitiateAuthCommand, ResendConfirmationCodeCommand, SignUpCommand, type AttributeType } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminCreateUserCommand, AdminGetUserCommand, AdminSetUserPasswordCommand, AdminUpdateUserAttributesCommand, AuthFlowType, ChangePasswordCommand, CognitoIdentityProviderClient, ConfirmForgotPasswordCommand, ConfirmSignUpCommand, ForgotPasswordCommand, InitiateAuthCommand, ResendConfirmationCodeCommand, SignUpCommand, type AttributeType } from '@aws-sdk/client-cognito-identity-provider';
 import crypto from 'crypto';
 
 export const generateSecretHash = async (username: string) => {
@@ -142,9 +142,9 @@ export async function cognitoForgotPassword({ email }: { email: string }) {
         Username: email,
         SecretHash: await generateSecretHash(email),
     };
-
     const command = new ForgotPasswordCommand(params);
-    return cognito.send(command);
+    const res = await cognito.send(command);
+    return res;
 }
 
 export async function cognitoConfirmForgotPassword({ email, code, newPassword }: { email: string, code: string, newPassword: string }) {
@@ -157,7 +157,8 @@ export async function cognitoConfirmForgotPassword({ email, code, newPassword }:
     };
 
     const command = new ConfirmForgotPasswordCommand(params);
-    return cognito.send(command);
+    const res = await cognito.send(command);
+    return res;
 }
 
 export async function cognitoChangePassword({
@@ -176,4 +177,53 @@ export async function cognitoChangePassword({
     });
 
     return cognito.send(command);
+}
+
+export async function cognitoAdminCreateUser({
+    email,
+    name,
+    phone,
+}: {
+    email: string
+    name?: string
+    phone?: string
+}) {
+    const userAttributes = [
+        { Name: 'email', Value: email },
+        { Name: 'email_verified', Value: 'true' },
+    ];
+    if (name) {
+        userAttributes.push({ Name: 'name', Value: name });
+    }
+    if (phone) {
+        userAttributes.push({ Name: 'phone_number', Value: phone });
+    }
+
+    const params = {
+        UserPoolId: USER_POOL_ID,
+        Username: email,
+        UserAttributes: userAttributes,
+        MessageAction: 'SUPPRESS' as const,
+    };
+    const command = new AdminCreateUserCommand(params);
+    const res = await cognito.send(command);
+    return res;
+}
+
+export async function cognitoAdminSetUserPassword({
+    email,
+    password,
+}: {
+    email: string
+    password: string
+}) {
+    const params = {
+        UserPoolId: USER_POOL_ID,
+        Username: email,
+        Password: password,
+        Permanent: true,
+    };
+    const command = new AdminSetUserPasswordCommand(params);
+    const res = await cognito.send(command);
+    return res;
 }

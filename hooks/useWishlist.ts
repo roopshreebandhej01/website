@@ -49,9 +49,8 @@ export function useWishlist() {
     const mutationVersion = localWishlistVersion
 
     if (!product.dbProductId) {
-      setWishlist(previousItems)
-      showToast({ title: "Unable to sync this wishlist item", tone: "error" })
-      return false
+      // Guest item with no DB product ID — Zustand-only, no sync needed
+      return true
     }
 
     try {
@@ -59,6 +58,11 @@ export function useWishlist() {
         productId: product.dbProductId,
         isWishlisted: shouldBeWishlisted,
       })
+
+      if (result.userIsNotLoggedIn) {
+        // Guest user — keep the Zustand update, skip DB sync
+        return true
+      }
 
       if (!result.success) {
         if (mutationVersion === localWishlistVersion) {
@@ -71,24 +75,11 @@ export function useWishlist() {
         return false
       }
 
-      if (result.userIsNotLoggedIn) {
-        if (mutationVersion === localWishlistVersion) {
-          setWishlist(previousItems)
-          showToast({ title: "Please sign in to update your wishlist", tone: "info" })
-          redirectToAuth()
-        }
-        return false
-      }
-
       if (mutationVersion !== localWishlistVersion) {
         return true
       }
 
       await syncWishlistFromDb()
-      // showToast({
-      //   title: shouldBeWishlisted ? "Added to wishlist" : "Removed from wishlist",
-      //   tone: "success",
-      // })
       return true
     } catch (error) {
       console.error(error)
@@ -108,13 +99,17 @@ export function useWishlist() {
     const mutationVersion = localWishlistVersion
 
     if (!product.dbProductId) {
-      setWishlist(previousItems)
-      showToast({ title: "Unable to sync this wishlist item", tone: "error" })
-      return false
+      // Guest item with no DB product ID — Zustand-only, no sync needed
+      return true
     }
 
     try {
       const result = await removeUserWishlistItem(product.dbProductId)
+
+      if (result.userIsNotLoggedIn) {
+        // Guest user — keep the Zustand update, skip DB sync
+        return true
+      }
 
       if (!result.success) {
         if (mutationVersion === localWishlistVersion) {
@@ -127,21 +122,11 @@ export function useWishlist() {
         return false
       }
 
-      if (result.userIsNotLoggedIn) {
-        if (mutationVersion === localWishlistVersion) {
-          setWishlist(previousItems)
-          showToast({ title: "Please sign in to update your wishlist", tone: "info" })
-          redirectToAuth()
-        }
-        return false
-      }
-
       if (mutationVersion !== localWishlistVersion) {
         return true
       }
 
       await syncWishlistFromDb()
-      // showToast({ title: "Removed from wishlist", tone: "success" })
       return true
     } catch (error) {
       console.error(error)

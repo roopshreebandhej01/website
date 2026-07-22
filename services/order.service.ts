@@ -2,12 +2,14 @@ import {
   countDashboardOrders,
   findDashboardOrderDetailRow,
   findOrderById,
+  findOrderConfirmationDetailRow,
   listDashboardOrderRows,
   updateOrderStatusRecord,
 } from '@/repositories/order.repository'
 import { getCurrentDbUserId } from '@/lib/current-db-user'
 import { getCurrentUser } from '@/lib/auth'
 import { getS3ObjectPreviewUrl } from '@/lib/s3'
+import type { InvoiceData } from '@/components/order/OrderInvoice'
 
 const allowedOrderStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled']
 
@@ -160,38 +162,89 @@ export async function getDashboardOrderDetails(orderId: string) {
 }
 
 export async function getOrderConfirmationDetails(orderId: string) {
-  const [details, sessionUser] = await Promise.all([
-    getDashboardOrderDetails(orderId),
-    getCurrentUser(),
-  ])
+  const details = await findOrderConfirmationDetailRow(orderId)
 
   if (!details) {
     return null
   }
 
+  const subtotal = getSubtotal(details.items)
+
   return {
     order: {
       orderId: details.order.orderNumber,
-      email: sessionUser?.email ?? '',
+      email: details.user?.email ?? '',
       orderDate: formatDate(details.order.createdAt),
       paymentMethod:
-        details.payment.method?.toUpperCase() ??
-        details.payment.provider.toUpperCase(),
-      paymentStatus: details.payment.status,
+        details.payment?.method?.toUpperCase() ??
+        details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
+      paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Pending',
       estimatedDelivery: '3 - 5 Days',
       totalPaid: formatCurrency(details.order.totalAmount),
     },
     address: {
-      name: sessionUser?.name || sessionUser?.email?.split('@')[0] || 'Customer',
-      line1: details.address.line,
-      phone: details.address.phone,
+      name: details.user?.name || details.user?.email?.split('@')[0] || 'Customer',
+      line1: [
+        details.order.addressLine1,
+        details.order.addressLine2,
+        details.order.city,
+        details.order.state,
+        details.order.postalCode,
+      ]
+        .filter(Boolean)
+        .join(', '),
+      phone: details.order.shippingPhone,
     },
     items: details.items.map((item) => ({
-      product: item.product,
-      variant: item.variant || 'Default',
+      product: item.productName,
+      variant: item.variantTitle || 'Default',
       quantity: item.quantity,
-      total: item.total,
-      image: item.image,
+      total: formatCurrency(item.productPrice * item.quantity),
+      image: item.productImage ? getS3ObjectPreviewUrl(item.productImage) : '/home/new-arrival-model.png',
+    })),
+  }
+}
+
+export async function getOrderConfirmationInvoiceDetails(orderId: string): Promise<InvoiceData | null> {
+  const details = await findOrderConfirmationDetailRow(orderId)
+
+  if (!details) {
+    return null
+  }
+
+  const subtotal = getSubtotal(details.items)
+
+  return {
+    orderId: details.order.orderNumber || details.order.id,
+    orderDate: formatDate(details.order.createdAt),
+    status: getStatusLabel(details.order.status),
+    customerName: details.user?.name || details.user?.email?.split('@')[0] || 'Customer',
+    customerEmail: details.user?.email ?? null,
+    customerPhone: details.order.shippingPhone,
+    shippingAddress: [
+      details.order.addressLine1,
+      details.order.addressLine2,
+      details.order.city,
+      details.order.state,
+      details.order.postalCode,
+      details.order.country,
+    ]
+      .filter(Boolean)
+      .join(', '),
+    paymentMethod:
+      details.payment?.method?.toUpperCase() ??
+      details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
+    paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Paid',
+    subtotal: formatCurrency(subtotal),
+    total: formatCurrency(details.order.totalAmount),
+    items: details.items.map((item) => ({
+      id: item.id,
+      product: item.productName,
+      sku: item.productSku,
+      variant: item.variantTitle || 'Default',
+      quantity: item.quantity,
+      unitPrice: formatCurrency(item.productPrice),
+      total: formatCurrency(item.productPrice * item.quantity),
     })),
   }
 }

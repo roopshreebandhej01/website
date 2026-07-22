@@ -91,8 +91,8 @@ export function useAddToCart() {
 
   async function syncItem(item: CartItem | CartItemInput) {
     if (!item.dbProductId) {
-      showToast({ title: "Unable to sync this cart item", tone: "error" })
-      return false
+      // Guest item with no DB product ID — Zustand-only, no sync needed
+      return true
     }
 
     const key = getCartItemKey(item)
@@ -118,10 +118,8 @@ export function useAddToCart() {
       }
 
       if (result.userIsNotLoggedIn) {
-        showToast({ title: "Please sign in to update your cart", tone: "info" })
-        await syncCartFromDb({ force: true })
-        redirectToAuth()
-        return false
+        // Guest user — DB sync is skipped, Zustand update is kept
+        return true
       }
 
       if (!result.success) {
