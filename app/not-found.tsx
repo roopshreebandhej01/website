@@ -1,13 +1,12 @@
-import { Suspense } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Home, Search, Frown } from "lucide-react"
+import { Suspense } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Home, Search, Frown } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import Header from "@/components/common/Header"
-import Footer from "@/components/common/Footer"
-import { formatPrice, products } from "@/components/global/const"
-import { ToastProvider } from "@/components/common/ToastProvider"
+import { Button } from "@/components/ui/button";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
+import { ToastProvider } from "@/components/common/ToastProvider";
 
 const NotFound = () => {
   return (
@@ -67,43 +66,11 @@ const NotFound = () => {
               </Link>
             </Button>
           </div>
-
-          <section className="mt-16">
-            <h2 className="font-heading text-3xl font-semibold text-black sm:text-4xl">
-              You May Also Like
-            </h2>
-
-            <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-5 md:gap-x-5 pb-20">
-              {products.map((product, index) => (
-                <Link
-                  key={`${product.name}-${index}`}
-                  href="/product/traditional-bandhej-saree"
-                  className="block text-left"
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden bg-[#f7eadb]">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      sizes="(min-width: 768px) 20vw, (min-width: 640px) 33vw, 50vw"
-                      className="object-cover object-top"
-                    />
-                  </div>
-                  <h3 className="mt-4 font-heading text-sm leading-snug text-[#3f2617]">
-                    {product.name}
-                  </h3>
-                  <p className="mt-2 text-sm font-medium text-[#c39150]">
-                    {formatPrice(product.price)}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
         </div>
         <Footer />
       </main>
     </ToastProvider>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

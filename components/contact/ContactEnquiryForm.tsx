@@ -1,39 +1,39 @@
-"use client"
+"use client";
 
-import { FormEvent, useRef, useState, useTransition } from "react"
+import { FormEvent, useRef, useState, useTransition } from "react";
 
-import { submitEnquiryContactAction } from "@/actions/customer-contact.action"
-import { useToast } from "@/components/common/ToastProvider"
-import { Button } from "@/components/ui/button"
+import { submitEnquiryContactAction } from "@/actions/customer-contact.action";
+import { useToast } from "@/components/common/ToastProvider";
+import { Button } from "@/components/ui/button";
 
 export function ContactEnquiryForm({
   initialCategories = ["Bandhej Sarees", "Bandhej Dupattas", "Custom Order"],
 }: {
   initialCategories?: string[];
 }) {
-  const formRef = useRef<HTMLFormElement>(null)
-  const { showToast } = useToast()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState("")
+  const formRef = useRef<HTMLFormElement>(null);
+  const { showToast } = useToast();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError("")
+    event.preventDefault();
+    setError("");
 
-    const formData = new FormData(event.currentTarget)
+    const formData = new FormData(event.currentTarget);
 
     startTransition(async () => {
-      const result = await submitEnquiryContactAction(formData)
+      const result = await submitEnquiryContactAction(formData);
 
       if (!result.success) {
-        setError(result.message)
-        showToast({ title: result.message, tone: "error" })
-        return
+        setError(result.message);
+        showToast({ title: result.message, tone: "error" });
+        return;
       }
 
-      formRef.current?.reset()
-      showToast({ title: result.message, tone: "success" })
-    })
+      formRef.current?.reset();
+      showToast({ title: result.message, tone: "success" });
+    });
   }
 
   return (
@@ -124,12 +124,12 @@ export function ContactEnquiryForm({
       <Button
         type="submit"
         disabled={isPending}
-        className="mt-9 h-12 w-48 rounded-[2px] bg-[#C39150] text-sm font-semibold tracking-[0.2em] text-white hover:bg-[#3F2617]"
+        className="mt-9 h-12 px-8 rounded-[2px] bg-[#C39150] text-sm font-semibold text-white hover:bg-[#3F2617]"
       >
         {isPending ? "Sending..." : "Send"}
       </Button>
     </form>
-  )
+  );
 }
 
 function Field({
@@ -140,12 +140,12 @@ function Field({
   autoComplete,
   required,
 }: {
-  label: string
-  name: string
-  placeholder: string
-  type?: string
-  autoComplete?: string
-  required?: boolean
+  label: string;
+  name: string;
+  placeholder: string;
+  type?: string;
+  autoComplete?: string;
+  required?: boolean;
 }) {
   return (
     <label className="block">
@@ -161,5 +161,5 @@ function Field({
         className="mt-3 h-12 w-full border border-[#C39150]/60 bg-transparent px-4 text-xs outline-none transition placeholder:text-[#3F2617]/45 focus:border-[#3F2617]"
       />
     </label>
-  )
+  );
 }

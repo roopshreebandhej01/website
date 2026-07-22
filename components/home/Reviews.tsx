@@ -75,13 +75,9 @@ const ReviewCard = ({ review }: { review: (typeof reviews)[number] }) => {
 
       <Divider className="mt-auto w-28 sm:mt-6 sm:w-36" />
 
-      <div className="mt-3 flex items-center justify-center gap-3 text-left sm:mt-5 sm:justify-start">
-        <div>
-          <h3 className="font-heading text-base font-semibold leading-none sm:text-xl">
-            {review.name}
-          </h3>
-        </div>
-      </div>
+      <h3 className="font-heading mt-3 w-full text-center text-base font-semibold leading-none sm:mt-5 sm:text-xl">
+        {review.name}
+      </h3>
     </article>
   );
 };

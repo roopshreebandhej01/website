@@ -108,7 +108,7 @@ export function SetNewPasswordScreen({
   return (
     <PlainAuthShell onBackToLogin={onBackToLogin}>
       <div className="mb-7">
-        <h1 className="font-playfairDisplay text-[32px] font-semibold leading-tight text-[#3b2418] sm:text-[36px]">
+        <h1 className="font-heading text-[32px] font-semibold leading-tight text-[#3b2418] sm:text-[36px]">
           Set New Password
         </h1>
         <p className="mt-2 text-xs text-[#c9914d] sm:text-sm">
@@ -261,7 +261,7 @@ function OtpScreen({
   return (
     <PlainAuthShell onBackToLogin={onBackToLogin}>
       <div className="mb-6">
-        <h1 className="font-playfairDisplay text-[32px] font-semibold leading-tight text-[#3b2418] sm:text-[36px]">
+        <h1 className="font-heading text-[32px] font-semibold leading-tight text-[#3b2418] sm:text-[36px]">
           {title}
         </h1>
         <p className="mt-2 text-xs text-[#c9914d] sm:text-sm">{subtitle}</p>

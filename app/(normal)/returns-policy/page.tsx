@@ -97,7 +97,7 @@ export default function ReturnsPolicy() {
               </div>
               <ul className="list-none space-y-3">
                 <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
+                  <span className="text-[#C39150] border">•</span>
                   <span>
                     Orders may be cancelled before dispatch by contacting our
                     customer support.

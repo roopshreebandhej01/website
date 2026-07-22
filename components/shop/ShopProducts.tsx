@@ -282,6 +282,7 @@ function ProductCard({ product }: { product: Product }) {
           href={`/product/${product.slug}`}
           className="absolute inset-0"
           aria-label={`View ${product.name}`}
+          prefetch={false}
         >
           {product.image ? (
             <Image
