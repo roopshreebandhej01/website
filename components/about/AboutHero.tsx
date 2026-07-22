@@ -4,35 +4,38 @@ const AboutHero = () => {
   return (
     <section className="relative isolate mt-16 overflow-hidden bg-[#f4e6d8] md:mt-0 md:min-h-svh">
       <Image
-        src="/new_banners/image 277.png"
-        alt="Roopshree Bandhej about hero"
-        fill
-        priority
+
         sizes="100vw"
+
+        fill
+
+        src="/new_banners/image 277.png"
+
+        alt="Roopshree Bandhej about hero"
+
+        priority
+
         className="hidden object-cover object-center md:block"
+
       />
       <div className="relative aspect-[903/1600] overflow-hidden md:hidden">
         <Image
-          src="/new_banners/image 277.png"
-          alt="Roopshree Bandhej about hero"
-          fill
-          priority
+
           sizes="100vw"
+
+          fill
+
+          src="/new_banners/about_us_mobile.png"
+
+          alt="Roopshree Bandhej about hero"
+
+          priority
+
           className="object-cover object-center"
+
         />
       </div>
       <div className="absolute inset-0 z-[1] bg-white/15 md:hidden" />
-      <div className="pointer-events-none absolute bottom-0 right-0 z-[2] w-[72vw] max-w-[25rem] md:hidden">
-        <Image
-          src="/about/sm-bg-heroOverlay.png"
-          alt=""
-          width={1024}
-          height={1536}
-          priority
-          sizes="72vw"
-          className="h-auto w-full"
-        />
-      </div>
 
       <div className="absolute inset-x-0 top-0 z-[3] mx-auto flex max-w-7xl items-start px-5 pt-10 sm:px-6 md:relative md:min-h-svh md:items-center md:px-8 md:py-20">
         <div className="w-full max-w-[21rem] text-[#3f2617] sm:max-w-md md:max-w-2xl">

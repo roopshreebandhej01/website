@@ -53,12 +53,19 @@ export function OrderConfirmationPage({
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-[#fff6ea] text-[#3F2617]">
       <Image
-        src="/orderconfirm-bg.png"
-        alt=""
-        fill
-        priority
+
         sizes="100vw"
+
+        fill
+
+        src="/orderconfirm-bg.png"
+
+        alt=""
+
+        priority
+
         className="-z-10 object-cover object-top"
+
       />
 
       <OrderConfirmationHeader />
@@ -138,11 +145,17 @@ export function OrderConfirmationPage({
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-[#f3dfc7]">
                     <Image
-                      src={item.image}
-                      alt={item.product}
-                      fill
+
                       sizes="48px"
+
+                      fill
+
+                      src={item.image}
+
+                      alt={item.product}
+
                       className="object-cover object-top"
+
                     />
                   </div>
                   <div className="min-w-0">
@@ -169,13 +182,13 @@ export function OrderConfirmationPage({
         </div>
 
         <div className="mt-7 grid w-full max-w-[520px] gap-4 sm:grid-cols-2">
-          <button
-            type="button"
+          <Link
+            href={`/order-confirmation/invoice?orderId=${encodeURIComponent(order.orderId)}`}
             className="flex h-12 items-center justify-center gap-2 border border-[#3F2617]/35 bg-white/75 text-sm font-semibold text-[#3F2617] transition hover:border-[#C39150] hover:text-[#C39150]"
           >
             <Download className="size-4" />
             Download Invoice
-          </button>
+          </Link>
           <Link
             href="/shop"
             className="flex h-12 items-center justify-center bg-[#C39150] text-sm font-semibold text-white transition hover:bg-[#3F2617]"
@@ -205,14 +218,21 @@ function OrderConfirmationHeader() {
 
   return (
     <header className="mx-auto flex h-16 w-full max-w-[980px] items-center justify-between px-4 sm:px-6 lg:px-8">
-      <Link href="/" className="relative block h-12 w-20 shrink-0">
+      <Link href="/" className="relative block h-14 w-24 shrink-0">
         <Image
-          src="/header-logo.png"
-          alt="Roop Shree"
+
+          sizes="96px"
+
           fill
+
+          src="/header-logo.png"
+
+          alt="Roop Shree"
+
           priority
-          sizes="80px"
+
           className="object-contain object-left"
+
         />
       </Link>
 

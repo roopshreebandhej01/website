@@ -15,6 +15,7 @@ export type CheckoutShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
+  email?: string
   addressLine1: string
   addressLine2: string
   city: string
@@ -30,6 +31,7 @@ function getAddressShipping(address: AddressView): CheckoutShippingDetails {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
+    email: "",
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", "),
     city: address.city,
@@ -43,6 +45,7 @@ function getEmptyShipping(): CheckoutShippingDetails {
   return {
     fullName: "",
     phone: "",
+    email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -56,8 +59,8 @@ function getInitialAddress(addresses: AddressView[]) {
   return addresses.find((address) => address.isDefault) ?? addresses[0] ?? null
 }
 
-function isShippingComplete(shipping: CheckoutShippingDetails) {
-  return Boolean(
+function isShippingComplete(shipping: CheckoutShippingDetails, isGuest: boolean) {
+  const isBaseComplete = Boolean(
     shipping.fullName.trim() &&
       shipping.phone.trim() &&
       shipping.addressLine1.trim() &&
@@ -65,9 +68,19 @@ function isShippingComplete(shipping: CheckoutShippingDetails) {
       shipping.state.trim() &&
       shipping.postalCode.trim(),
   )
+  if (isGuest) {
+    return isBaseComplete && Boolean(shipping.email?.trim())
+  }
+  return isBaseComplete
 }
 
-export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
+export function CheckoutFlow({
+  addresses,
+  isGuest,
+}: {
+  addresses: AddressView[]
+  isGuest: boolean
+}) {
   const searchParams = useSearchParams()
   const source = searchParams.get("source") === "buy-now" ? "buy-now" : "cart"
 
@@ -89,7 +102,7 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
   const summary = getCartSummary(items)
 
   const isManualAddress = selectedAddressId === manualAddressId
-  const canReviewOrder = items.length > 0 && isShippingComplete(shipping)
+  const canReviewOrder = items.length > 0 && isShippingComplete(shipping, isGuest)
 
   useEffect(() => {
     if (source !== "buy-now") return
@@ -120,6 +133,7 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
           summary={summary}
           source={source}
           shipping={shipping}
+          isGuest={isGuest}
           onClose={() => setIsReviewOpen(false)}
         />
       ) : (
@@ -186,6 +200,20 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
               >
                 {addresses.length === 0 || isManualAddress ? (
                   <>
+                    {isGuest ? (
+                      <div className="mb-3">
+                        <CheckoutInput
+                          label="Email Address"
+                          value={shipping.email || ""}
+                          onChange={(value) =>
+                            setShipping((current) => ({
+                              ...current,
+                              email: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    ) : null}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <CheckoutInput
                         label="Full Name"

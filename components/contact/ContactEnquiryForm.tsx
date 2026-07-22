@@ -42,7 +42,7 @@ export function ContactEnquiryForm({
       onSubmit={submit}
       className="mt-7 bg-[#F7EFE6] px-7 py-9 md:px-10 md:py-11"
     >
-      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.48em] text-[#C39150]">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-[#C39150]">
         Send a Message
       </p>
       <h3 className="mt-4 font-heading text-[2rem] font-medium leading-tight text-[#C39150]">
@@ -124,7 +124,7 @@ export function ContactEnquiryForm({
       <Button
         type="submit"
         disabled={isPending}
-        className="mt-9 h-12 px-8 rounded-[2px] bg-[#C39150] text-sm font-semibold text-white hover:bg-[#3F2617]"
+        className="mt-9 h-12 px-8 rounded-[2px] bg-[#C39150] text-sm font-semibold tracking-tight text-white hover:bg-[#3F2617]"
       >
         {isPending ? "Sending..." : "Send"}
       </Button>

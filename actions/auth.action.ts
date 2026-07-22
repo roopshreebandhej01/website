@@ -3,7 +3,9 @@
 import { cookies } from 'next/headers'
 import {
   authSignIn,
+  cognitoAdminCreateUser,
   cognitoAdminGetUser,
+  cognitoAdminSetUserPassword,
   cognitoChangePassword,
   cognitoConfirmForgotPassword,
   cognitoConfirmSignUp,
@@ -12,6 +14,10 @@ import {
   cognitoSignUp,
   cognitoUpdateUserAttribute,
 } from '@/helper/cognito'
+import { findUserByEmail } from '@/repositories/user.repository'
+import { db } from '@/lib/db'
+import { users } from '@/db/schema/users'
+import { eq } from 'drizzle-orm'
 import {
   assertCompleteTokenSet,
   getAuthCookiePayload,
@@ -34,7 +40,12 @@ function getNormalizedEmail(email: string) {
 }
 
 function getSignupPhoneNumber(phone: string) {
-  const digits = phone.replace(/[^\d]/g, '')
+  let digits = phone.replace(/[^\d]/g, '')
+
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1)
+  }
+
   const withoutCountryCode =
     digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits
 
@@ -90,7 +101,7 @@ async function ensureCognitoEmailVerifiedForRecovery(email: string) {
     return
   }
 
-  await cognitoUpdateUserAttribute({
+  const updateRes = await cognitoUpdateUserAttribute({
     email,
     userAttribute: [{ Name: 'email_verified', Value: 'true' }],
   })
@@ -265,21 +276,50 @@ export async function forgotPasswordAction({
   email: string
 }): Promise<AuthActionResult> {
   const normalizedEmail = getNormalizedEmail(email)
-
   if (!normalizedEmail) {
     return { ok: false, error: 'Email is required' }
   }
 
   try {
+    const existing = await findUserByEmail(normalizedEmail)
+    if (existing && !existing.cognitoSub) {
+      let cognitoPhone: string | undefined = undefined
+      if (existing.phone) {
+        try {
+          cognitoPhone = getSignupPhoneNumber(existing.phone)
+        } catch (e) {
+          const clean = existing.phone.replace(/[^\d]/g, '')
+          if (clean.length === 10) {
+            cognitoPhone = `+91${clean}`
+          } 
+        }
+      } 
+      try {
+        const createRes = await cognitoAdminCreateUser({
+          email: normalizedEmail,
+          name: existing.name,
+          phone: cognitoPhone,
+        })
+        const attributes = createRes.User?.Attributes ?? []
+        //const createdSub = attributes.find((attr) => attr.Name === 'sub')?.Value || createRes.User?.Username
+        const tempPassword = Math.random().toString(36).slice(-8) + 'A1!'
+         await cognitoAdminSetUserPassword({
+          email: normalizedEmail,
+          password: tempPassword,
+        })
+      } catch (err) {
+        console.error('[forgotPasswordAction] ERROR in Step 3 (guest creation in Cognito):', err)
+      }
+    }
+
     await ensureCognitoEmailVerifiedForRecovery(normalizedEmail)
     const response = await cognitoForgotPassword({ email: normalizedEmail })
-
     return {
       ok: true,
       message: getDeliveryMessage(response.CodeDeliveryDetails, 'Password reset OTP sent. Please check your inbox.'),
     }
   } catch (error) {
-    console.error('Unable to send forgot password OTP:', error)
+    console.error('[forgotPasswordAction] ERROR in forgotPasswordAction:', error)
 
     return {
       ok: false,
@@ -298,21 +338,34 @@ export async function confirmForgotPasswordAction({
   newPassword: string
 }): Promise<AuthActionResult> {
   const normalizedEmail = getNormalizedEmail(email)
-
   if (!normalizedEmail || !code || !newPassword) {
     return { ok: false, error: 'Email, OTP and new password are required' }
   }
 
   try {
-    await cognitoConfirmForgotPassword({
+    const confirmRes = await cognitoConfirmForgotPassword({
       email: normalizedEmail,
       code,
       newPassword,
     })
+    try {
+      const userRes = await cognitoAdminGetUser({ email: normalizedEmail })
+      const attributes = userRes.UserAttributes ?? []
+      const userSub = attributes.find((attr) => attr.Name === 'sub')?.Value || userRes.Username
+      if (userSub) {
+        const dbUpdate = await db
+          .update(users)
+          .set({ cognitoSub: userSub, emailVerified: true, updatedAt: new Date() })
+          .where(eq(users.email, normalizedEmail))
+          .returning()
+      }
+    } catch (dbErr) {
+      console.error('[confirmForgotPasswordAction] Step 4 ERROR updating local DB after recovery:', dbErr)
+    }
 
     return { ok: true }
   } catch (error) {
-    console.error('Unable to confirm forgot password:', error)
+    console.error('[confirmForgotPasswordAction] ERROR in confirmForgotPasswordAction:', error)
 
     return {
       ok: false,

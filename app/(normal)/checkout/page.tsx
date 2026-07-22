@@ -7,11 +7,7 @@ import { getCurrentSession } from "@/lib/auth"
 export default async function Page() {
   const session = await getCurrentSession()
 
-  if (!session) {
-    redirect("/auth?callbackUrl=/checkout")
-  }
+  const addresses = session ? await getAddresses() : []
 
-  const addresses = await getAddresses()
-
-  return <CheckoutPage addresses={addresses} />
+  return <CheckoutPage addresses={addresses} isGuest={!session} />
 }

@@ -79,28 +79,13 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <ul className="list-none space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Standard orders are processed within{" "}
-                    <strong>2–4 business days</strong>.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Orders placed on Sundays or public holidays will be
-                    processed on the next working day.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Customized, handcrafted, made-to-order, or bulk orders may
+                <li>Standard orders are processed within{" "}
+                    <strong>2–4 business days</strong>.</li>
+                <li>Orders placed on Sundays or public holidays will be
+                    processed on the next working day.</li>
+                <li>Customized, handcrafted, made-to-order, or bulk orders may
                     require additional processing time. Customers will be
-                    informed accordingly.
-                  </span>
-                </li>
+                    informed accordingly.</li>
               </ul>
             </section>
 
@@ -115,25 +100,10 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <p className="mb-3">Estimated delivery within India:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    <strong>Metro Cities:</strong> 3–7 business days
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    <strong>Other Cities:</strong> 5–10 business days
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    <strong>Remote Locations:</strong> 7–14 business days
-                  </span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li><strong>Metro Cities:</strong> 3–7 business days</li>
+                <li><strong>Other Cities:</strong> 5–10 business days</li>
+                <li><strong>Remote Locations:</strong> 7–14 business days</li>
               </ul>
               <p className="mt-4 text-[#3F2617]/70 text-xs italic">
                 * Delivery timelines are estimates and may vary due to courier
@@ -153,20 +123,10 @@ export default function ShippingPolicy() {
                 </h2>
               </div>
               <ul className="list-none space-y-3">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Shipping charges (if applicable) are calculated during
-                    checkout.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Promotional free shipping offers will be displayed on the
-                    website whenever available.
-                  </span>
-                </li>
+                <li>Shipping charges (if applicable) are calculated during
+                    checkout.</li>
+                <li>Promotional free shipping offers will be displayed on the
+                    website whenever available.</li>
               </ul>
             </section>
 
@@ -311,12 +271,12 @@ export default function ShippingPolicy() {
                         WhatsApp
                       </h4>
                       <a
-                        href="https://wa.me/919529888006"
+                        href="https://wa.me/917627028842"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
                       >
-                        Chat on WhatsApp (+91 95298 88006)
+                        Chat on WhatsApp (+91 7627028842)
                       </a>
                     </div>
                   </div>
