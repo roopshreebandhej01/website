@@ -77,7 +77,7 @@ const Heritage = () => {
 
           <Button
             asChild
-            className="mt-6 h-11 rounded-[2px] bg-[#C39150] px-7 text-xs font-semibold text-white shadow-none hover:bg-[#3F2617] sm:h-12 sm:px-10 sm:text-base"
+            className="mt-6 h-11 bg-[#C39150] px-7 text-xs font-semibold text-white shadow-none hover:bg-[#3F2617] sm:h-12 sm:px-10 sm:text-base"
           >
             <Link href="/about">
               Discover Our Craft

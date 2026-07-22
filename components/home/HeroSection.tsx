@@ -54,11 +54,11 @@ const HeroSection = () => {
           <motion.h1
             variants={fadeUp}
             transition={{ duration: 0.65, ease: "easeOut" }}
-            className="-ml-[0.1em] text-[2.65rem] font-playfairDisplay  leading-[0.9] text-[#3F2617] sm:text-5xl md:text-6xl lg:text-7xl"
+            className="-ml-[0.1em] font-heading text-[2.65rem] leading-[0.9] text-[#3F2617] sm:text-5xl md:text-6xl lg:text-7xl"
           >
             BANDHEJ
             <span className="block text-[#C18F50] sm:text-5xl md:text-6xl lg:text-6xl">
-              Sarees and dupatas
+              Sarees and dupattas
             </span>
           </motion.h1>
 
@@ -93,7 +93,7 @@ const HeroSection = () => {
           >
             <Button
               asChild
-              className="h-9 rounded-none bg-[#C39150] px-6 text-xs text-white shadow-lg shadow-[#3F2617]/15 hover:bg-[#3F2617] md:h-11 md:px-7 md:text-sm"
+              className="h-9 bg-[#C39150] px-6 text-xs text-white shadow-lg shadow-[#3F2617]/15 hover:bg-[#3F2617] md:h-11 md:px-7 md:text-sm"
             >
               <Link href="/shop">
                 <span className="md:hidden">Explore Collection</span>

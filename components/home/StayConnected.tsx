@@ -1,24 +1,25 @@
-import Image from "next/image"
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
 
-import { Button } from "@/components/ui/button"
-import { NEXT_PUBLIC_S3_BASE_URL } from "@/env"
+import { Button } from "@/components/ui/button";
+import { NEXT_PUBLIC_S3_BASE_URL } from "@/env";
+import { IconBrandFacebook } from "@tabler/icons-react";
 
-const s3Base = NEXT_PUBLIC_S3_BASE_URL.replace(/\/$/, "")
+const s3Base = NEXT_PUBLIC_S3_BASE_URL.replace(/\/$/, "");
 
 const instagramVideos = [
   `${s3Base}/videos/IMG_2301.mp4`,
   `${s3Base}/videos/IMG_2302.mp4`,
   `${s3Base}/videos/IMG_2332.mp4`,
   `${s3Base}/videos/IMG_6730.mp4`,
-]
+];
 
 const facebookVideos = [
   `${s3Base}/videos/IMG_2667.mp4`,
   `${s3Base}/videos/IMG_3035.mp4`,
   `${s3Base}/videos/IMG_4894.mp4`,
   `${s3Base}/videos/IMG_6634.mp4`,
-]
+];
 
 const InstagramMark = ({ className }: { className?: string }) => (
   <svg
@@ -35,19 +36,7 @@ const InstagramMark = ({ className }: { className?: string }) => (
     <circle cx="12" cy="12" r="3.5" />
     <circle cx="17" cy="7" r="0.8" fill="currentColor" stroke="none" />
   </svg>
-)
-
-const FacebookMark = ({ className }: { className?: string }) => (
-  <svg
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-    className={className}
-    fill="currentColor"
-  >
-    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1V12h3v3h-3v6.8c4.56-.93 8-4.96 8-9.8z" />
-  </svg>
-)
-
+);
 const StayConnected = () => {
   return (
     <div>
@@ -62,16 +51,6 @@ const StayConnected = () => {
         />
 
         <div className="relative mx-auto max-w-7xl px-5 text-center sm:px-6 lg:px-8">
-          <Image
-            src="/about/timelesselegance.png"
-            alt=""
-            width={83}
-            height={67}
-            className="mx-auto h-8 w-10 object-contain sm:h-11 sm:w-14"
-          />
-          <p className="mt-3 text-[0.72rem] font-semibold uppercase tracking-[0.34em] text-[#3f2617] sm:text-sm">
-            Stay Connected
-          </p>
           <h2 className="mt-3 font-semibold text-2xl leading-tight text-[#3f2617] sm:text-5xl lg:text-6xl">
             Follow Roopshree on Instagram
           </h2>
@@ -83,9 +62,9 @@ const StayConnected = () => {
           </div>
 
           <p className="mx-auto mt-4 max-w-[19rem] text-[0.82rem] font-medium leading-[1.65] text-[#6b625d] sm:max-w-3xl sm:text-lg">
-            Get inspired by our latest collections, styling ideas, and behind the
-            scenes moments. Follow us on social media and be part of the Roopshree
-            family.
+            Get inspired by our latest collections, styling ideas, and behind
+            the scenes moments. Follow us on social media and be part of the
+            Roopshree family.
           </p>
 
           <div className="scrollbar-hidden mx-auto mt-9 flex max-w-5xl snap-x gap-3 overflow-x-auto px-[calc(50%-9.5rem)] sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
@@ -111,9 +90,12 @@ const StayConnected = () => {
 
           <Button
             asChild
-            className="mt-9 h-12 rounded-[3px] bg-[#C39150] px-9 text-sm font-semibold text-white shadow-none hover:bg-[#3F2617] sm:h-14 sm:min-w-[21rem] sm:px-12 sm:text-xl"
+            className="mt-9 h-10 bg-[#C39150] px-9 text-sm font-semibold text-white shadow-none hover:bg-[#efe0cf] hover:text-[#3F2617] sm:h-12 sm:min-w-[21rem] sm:px-8 sm:text-xl"
           >
-            <Link href="https://www.instagram.com/Roopshreebandhej" target="_blank">
+            <Link
+              href="https://www.instagram.com/Roopshreebandhej"
+              target="_blank"
+            >
               <InstagramMark className="size-5 sm:size-7" />
               Follow us on Instagram
             </Link>
@@ -132,16 +114,6 @@ const StayConnected = () => {
         />
 
         <div className="relative mx-auto max-w-7xl px-5 text-center sm:px-6 lg:px-8">
-          <Image
-            src="/about/timelesselegance.png"
-            alt=""
-            width={83}
-            height={67}
-            className="mx-auto h-8 w-10 object-contain brightness-0 invert sm:h-11 sm:w-14"
-          />
-          <p className="mt-3 text-[0.72rem] font-semibold uppercase tracking-[0.34em] text-[#efe0cf]/80 sm:text-sm">
-            Stay Connected
-          </p>
           <h2 className="mt-3 font-semibold text-2xl leading-tight text-white sm:text-5xl lg:text-6xl">
             Follow Roopshree on Facebook
           </h2>
@@ -153,7 +125,8 @@ const StayConnected = () => {
           </div>
 
           <p className="mx-auto mt-4 max-w-[19rem] text-[0.82rem] font-medium leading-[1.65] text-[#efe0cf]/70 sm:max-w-3xl sm:text-lg">
-            Stay updated with our latest announcements, user reviews, and events. Connect with our community on Facebook.
+            Stay updated with our latest announcements, user reviews, and
+            events. Connect with our community on Facebook.
           </p>
 
           <div className="scrollbar-hidden mx-auto mt-9 flex max-w-5xl snap-x gap-3 overflow-x-auto px-[calc(50%-9.5rem)] sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
@@ -179,17 +152,20 @@ const StayConnected = () => {
 
           <Button
             asChild
-            className="mt-9 h-12 rounded-[3px] bg-[#C39150] px-9 text-sm font-semibold text-white shadow-none hover:bg-[#efe0cf] hover:text-[#3F2617] sm:h-14 sm:min-w-[21rem] sm:px-12 sm:text-xl"
+            className="mt-9 h-10 bg-[#C39150] px-9 text-sm font-semibold text-white shadow-none hover:bg-[#efe0cf] hover:text-[#3F2617] sm:h-12 sm:min-w-[21rem] sm:px-8 sm:text-xl"
           >
-            <Link href="https://www.facebook.com/profile.php?id=100090309849419" target="_blank">
-              <FacebookMark className="size-5 sm:size-7 fill-current" />
+            <Link
+              href="https://www.facebook.com/profile.php?id=100090309849419"
+              target="_blank"
+            >
+              <IconBrandFacebook className="size-5 sm:size-7 fill-current" />
               Follow us on Facebook
             </Link>
           </Button>
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default StayConnected
+export default StayConnected;

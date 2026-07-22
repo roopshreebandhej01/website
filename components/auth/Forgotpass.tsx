@@ -55,7 +55,7 @@ export default function Forgotpass({
         </button>
 
         <div className="mb-8">
-          <h1 className="font-playfairDisplay text-[34px] font-semibold leading-tight text-[#3b2418] sm:text-[42px]">
+          <h1 className="font-heading text-[34px] font-semibold leading-tight text-[#3b2418] sm:text-[42px]">
             Forgot Password
           </h1>
           <p className="mt-2 text-sm text-[#c9914d] sm:text-base ">

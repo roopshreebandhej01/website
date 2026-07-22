@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Poppins } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/common/ToastProvider";
-
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -36,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${playfairDisplay.variable} ${poppins.variable}`}
+      className={`h-full antialiased ${poppins.variable} ${poppins.className}`}
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider>{children}</ToastProvider>

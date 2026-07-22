@@ -71,7 +71,7 @@ export default function Login({
             </Link>
 
             <div className="mb-6 text-center lg:mb-7 xl:mb-8">
-              <h1 className="font-playfairDisplay text-[22px] leading-tight text-[#3b2418] lg:text-[clamp(28px,2vw,32px)] lg:font-semibold">
+              <h1 className="font-heading text-[22px] leading-tight text-[#3b2418] lg:text-[clamp(28px,2vw,32px)] lg:font-semibold">
                 Welcome Back
               </h1>
               <p className="mt-1 text-xs text-[#3b2418] lg:mt-2 lg:text-base">

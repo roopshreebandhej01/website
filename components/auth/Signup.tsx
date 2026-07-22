@@ -89,7 +89,7 @@ export default function Signup({
             </Link>
 
             <div className="mb-6 text-center lg:mb-5 xl:mb-6">
-              <h1 className="font-playfairDisplay text-[22px] leading-tight text-[#3b2418] lg:text-[clamp(26px,1.9vw,30px)] lg:font-semibold">
+              <h1 className="font-heading text-[22px] leading-tight text-[#3b2418] lg:text-[clamp(26px,1.9vw,30px)] lg:font-semibold">
                 Register
               </h1>
               <p className="mt-1 text-xs text-[#3b2418] lg:text-sm">

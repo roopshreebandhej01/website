@@ -448,7 +448,7 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                 <Button
                   onClick={() => handleAddToCart(cartItem)}
                   disabled={selectedVariant?.stockQuantity === 0}
-                  className="h-12 rounded-none   text-sm font-semibold   disabled:opacity-60"
+                  className="h-12 text-sm font-semibold disabled:opacity-60"
                 >
                   {selectedVariant?.stockQuantity === 0
                     ? "Out of stock"
@@ -468,7 +468,7 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                   );
                   router.push("/checkout?source=buy-now");
                 }}
-                className="h-12 rounded-none bg-[#3f2617] text-sm font-semibold text-white hover:bg-[#3f2617]/90 disabled:opacity-60"
+                className="h-12 bg-[#3f2617] text-sm font-semibold text-white hover:bg-[#3f2617]/90 disabled:opacity-60"
               >
                 Buy Now
               </Button>

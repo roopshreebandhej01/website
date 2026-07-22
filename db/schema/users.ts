@@ -19,7 +19,7 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    cognitoSub: varchar('cognito_sub', { length: 128 }).notNull(),
+    cognitoSub: varchar('cognito_sub', { length: 128 }),
     name: varchar('name', { length: 160 }).notNull(),
     email: varchar('email', { length: 255 }).notNull(),
     phone: varchar('phone', { length: 20 }),

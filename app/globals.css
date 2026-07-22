@@ -36,9 +36,9 @@
   --sidebar-border: oklch(0.9219 0 0);
   --sidebar-ring: oklch(0.7090 0 0);
   --font-sans: var(--font-poppins);
-  --font-serif: var(--font-playfair);
-  --font-mono: Geist Mono, monospace;
-  --font-heading: var(--font-playfair);
+  --font-serif: var(--font-poppins);
+  --font-mono: var(--font-poppins);
+  --font-heading: var(--font-poppins);
   --font-subheading: var(--font-poppins);
   --radius: 0.4rem;
   --shadow-x: 0px;
@@ -92,9 +92,11 @@
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: oklch(1.0000 0 0);
   --sidebar-ring: oklch(0.4386 0 0);
-  --font-sans: Poppins, ui-sans-serif, sans-serif, system-ui;
-  --font-serif: Playfair Display, ui-serif, serif;
-  --font-mono: Geist Mono, monospace;
+  --font-sans: var(--font-poppins);
+  --font-serif: var(--font-poppins);
+  --font-mono: var(--font-poppins);
+  --font-heading: var(--font-poppins);
+  --font-subheading: var(--font-poppins);
   --radius: 0.4rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -146,9 +148,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-poppins);
+  --font-serif: var(--font-poppins);
+  --font-heading: var(--font-poppins);
+  --font-subheading: var(--font-poppins);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

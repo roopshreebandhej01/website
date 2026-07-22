@@ -1,13 +1,17 @@
-import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import type { Product } from "@/components/global/const"
-import { ProductCard } from "@/components/product/ProductCard"
+import { Button } from "@/components/ui/button";
+import type { Product } from "@/components/global/const";
+import { ProductCard } from "@/components/product/ProductCard";
 
-const Newarrival = ({ products: fetchedProducts }: { products?: Product[] }) => {
-  const productItems = fetchedProducts ?? []
+const Newarrival = ({
+  products: fetchedProducts,
+}: {
+  products?: Product[];
+}) => {
+  const productItems = fetchedProducts ?? [];
 
   return (
     <section className="bg-white">
@@ -66,14 +70,13 @@ const Newarrival = ({ products: fetchedProducts }: { products?: Product[] }) => 
             </p>
             <Button
               asChild
-              className="mt-5 h-10 rounded-[2px] bg-[#C39150] px-10 text-xs font-semibold text-white shadow-none hover:bg-[#3F2617] md:mt-[2.45vw] md:h-[3.5vw] md:min-h-14 md:min-w-[21vw] md:px-[3vw] md:text-[1.2vw]"
+              className="mt-5 h-10 bg-[#C39150] px-10 text-xs font-semibold text-white shadow-none hover:bg-[#3F2617] md:mt-[2.45vw] md:h-[3.5vw] md:min-h-14 md:min-w-[21vw] md:px-[3vw] md:text-[1.2vw]"
             >
               <Link href="/shop">
                 Shop This Look
                 <ArrowRight className="size-4 md:size-6" />
               </Link>
             </Button>
-
           </div>
         </div>
       </div>
@@ -97,8 +100,7 @@ const Newarrival = ({ products: fetchedProducts }: { products?: Product[] }) => 
         ) : null}
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Newarrival
-
+export default Newarrival;

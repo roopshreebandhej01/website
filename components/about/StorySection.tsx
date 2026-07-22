@@ -1,9 +1,9 @@
-import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import SectionDivider from "./SectionDivider"
+import { Button } from "@/components/ui/button";
+import SectionDivider from "./SectionDivider";
 
 const StorySection = () => {
   return (
@@ -42,18 +42,18 @@ const StorySection = () => {
 
           <div className="mt-8 max-w-[43rem] space-y-5 text-[0.72rem] font-medium leading-[1.6] text-black sm:text-sm lg:text-[0.95rem]">
             <p>
-              Roopshree began in 1978, with our founder Smt. Roopshree Devi
-              travelling to the dusty lanes of Bhuj and Kutch, seeking out
-              master Bandhej artisans whose families had practiced the craft for
-              centuries. What started as a single trunk of sarees sold from her
-              Jaipur home is today a living archive of color and textile
-              traditions.
+              Roop Shree was established in 1980 in Sikar, Rajasthan, by Mr.
+              Suresh Kumar Agarwal with a vision to preserve and celebrate the
+              timeless beauty of Bandhej and traditional Indian textiles. What
+              began as a small family business has grown into a trusted name,
+              offering authentic handcrafted creations that honor generations of
+              skilled artisans.
             </p>
             <p>
-              Every pattern is rooted in time-honored knots, naturally dyed, and
-              finished with hand-embroidered motifs, representing over 120
-              artisan families across Gujarat and Rajasthan. We do not chase
-              trends. We handcraft heirlooms.
+              At Roop Shree, we don’t simply follow fashion—we preserve
+              traditions, celebrate craftsmanship, and create heirloom pieces
+              that carry the elegance of Indian heritage from one generation to
+              the next.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ const StorySection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default StorySection
+export default StorySection;
