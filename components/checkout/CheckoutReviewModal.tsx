@@ -239,7 +239,9 @@ export function CheckoutReviewModal({
 
           <div className="mt-5 space-y-3">
             <ReviewBlock label="Contact">
-              {shipping.fullName || "-"} · {shipping.phone || "-"}
+              {[shipping.fullName || "-", shipping.phone || "-", shipping.secondPhone]
+                .filter(Boolean)
+                .join(" · ")}
             </ReviewBlock>
             <ReviewBlock label="Ship To">
               {[

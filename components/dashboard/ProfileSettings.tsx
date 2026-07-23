@@ -31,6 +31,7 @@ export function ProfileSettings({ profile }: { profile: ProfileView | null }) {
       const result = await updateProfile({
         fullName: formData.get("fullName"),
         phone: formData.get("phone"),
+        secondPhone: formData.get("secondPhone"),
       });
 
       showToast({
@@ -102,6 +103,11 @@ export function ProfileSettings({ profile }: { profile: ProfileView | null }) {
                 name="phone"
                 defaultValue={profile?.phone}
                 required
+              />
+              <Field
+                label="Alternate Mobile Number (Optional)"
+                name="secondPhone"
+                defaultValue={profile?.secondPhone}
               />
               <Field
                 label="Email"

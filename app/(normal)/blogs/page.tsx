@@ -3,6 +3,9 @@ import { getBlogCategories, getBlogs } from "@/services/blog.service";
 import { Metadata } from "next";
 import { Suspense } from "react";
 
+export const dynamic = "force-static";
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "Roopshree Blog - Bandhej Stories, Styling & Maintenance Tips",
   description:

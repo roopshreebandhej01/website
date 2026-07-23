@@ -2,6 +2,9 @@ import { BlogDetailPage } from "@/components/blog/BlogDetailPage"
 import { getBlogBySlug, getBlogDetailPageData } from "@/services/blog.service"
 import { notFound } from "next/navigation"
 
+export const dynamic = "force-static"
+export const revalidate = 86400
+
 export async function generateMetadata({
   params,
 }: {

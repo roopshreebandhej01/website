@@ -177,6 +177,7 @@ export async function getDashboardOrderDetails(orderId: string) {
     address: {
       name: customerName,
       phone: row.address?.phone ?? row.order.shippingPhone,
+      secondPhone: row.order.shippingPhone2,
       line: [
         row.order.addressLine1,
         row.order.addressLine2,
@@ -242,6 +243,7 @@ export async function getOrderConfirmationDetails(orderId: string) {
         .filter(Boolean)
         .join(', '),
       phone: details.order.shippingPhone,
+      secondPhone: details.order.shippingPhone2,
     },
     items: details.items.map((item) => ({
       product: item.productName,
@@ -277,6 +279,7 @@ export async function getOrderConfirmationInvoiceDetails(orderId: string): Promi
     }),
     customerEmail: details.user?.email ?? null,
     customerPhone: details.order.shippingPhone,
+    customerPhone2: details.order.shippingPhone2,
     shippingAddress: [
       details.order.addressLine1,
       details.order.addressLine2,

@@ -22,6 +22,7 @@ export default async function Page({
     customerName: details.address.name || "Customer",
     customerEmail: details.customer.email,
     customerPhone: details.address.phone,
+    customerPhone2: details.address.secondPhone,
     shippingAddress: details.address.line,
     paymentMethod:
       details.payment.method?.toUpperCase() ??

@@ -27,6 +27,7 @@ type ShippingAddress = {
   line2?: string;
   cityState?: string;
   phone: string;
+  secondPhone?: string | null;
 };
 
 type OrderItem = {
@@ -111,6 +112,9 @@ export function OrderConfirmationPage({
               {address.line2 ? <p>{address.line2}</p> : null}
               {address.cityState ? <p>{address.cityState}</p> : null}
               <p>Phone: {address.phone}</p>
+              {address.secondPhone ? (
+                <p>Alternate Phone: {address.secondPhone}</p>
+              ) : null}
             </div>
           </InfoCard>
         </div>

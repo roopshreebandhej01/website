@@ -31,6 +31,7 @@ type ShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
+  secondPhone?: string
   email?: string
   addressLine1: string
   addressLine2?: string
@@ -100,6 +101,7 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
     addressId: input.addressId?.trim() || undefined,
     fullName: input.fullName?.trim() ?? "",
     phone: input.phone?.trim() ?? "",
+    secondPhone: input.secondPhone?.trim() || undefined,
     email: input.email?.trim() || undefined,
     addressLine1: input.addressLine1?.trim() ?? "",
     addressLine2: input.addressLine2?.trim() || undefined,
@@ -112,11 +114,13 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
 
 function mapAddressToShipping(
   address: typeof addresses.$inferSelect,
+  secondPhone?: string,
 ): ShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
+    secondPhone,
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", ") || undefined,
     city: address.city,
@@ -138,6 +142,14 @@ async function findUserAddress(userId: string, addressId: string) {
 
 async function resolveShippingDetails(userId: string, input: ShippingDetails) {
   const shipping = normalizeShippingDetails(input)
+  const secondPhoneError = getSecondPhoneValidationError(shipping.secondPhone)
+
+  if (secondPhoneError) {
+    return {
+      ok: false as const,
+      message: secondPhoneError,
+    }
+  }
 
   if (shipping.addressId) {
     const address = await findUserAddress(userId, shipping.addressId)
@@ -146,10 +158,23 @@ async function resolveShippingDetails(userId: string, input: ShippingDetails) {
       return { ok: false as const, message: "Selected address was not found" }
     }
 
-    return { ok: true as const, shipping: mapAddressToShipping(address) }
+    return {
+      ok: true as const,
+      shipping: mapAddressToShipping(address, shipping.secondPhone),
+    }
   }
 
   return validateManualShippingDetails(shipping)
+}
+
+function getSecondPhoneValidationError(secondPhone?: string) {
+  const phone2Digits = secondPhone?.replace(/[^\d]/g, '') ?? ''
+
+  if (phone2Digits && phone2Digits.length !== 10) {
+    return "Alternate phone number must be exactly 10 digits"
+  }
+
+  return null
 }
 
 function validateManualShippingDetails(input: ShippingDetails) {
@@ -434,7 +459,12 @@ function formatE164Phone(phone: string) {
   return phone
 }
 
-async function resolveGuestUserId(email: string, fullName: string, phone?: string) {
+async function resolveGuestUserId(
+  email: string,
+  fullName: string,
+  phone?: string,
+  secondPhone?: string,
+) {
   const normalizedEmail = email.trim().toLowerCase()
   const existing = await db
     .select()
@@ -446,6 +476,15 @@ async function resolveGuestUserId(email: string, fullName: string, phone?: strin
     if (existing[0].cognitoSub) {
       throw new Error("This email is registered. Please sign in to complete your checkout.")
     }
+    if (secondPhone && secondPhone !== existing[0].secondPhone) {
+      await db
+        .update(users)
+        .set({
+          secondPhone: formatE164Phone(secondPhone),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, existing[0].id))
+    }
     return existing[0].id
   }
 
@@ -455,6 +494,7 @@ async function resolveGuestUserId(email: string, fullName: string, phone?: strin
       email: normalizedEmail,
       name: fullName.trim(),
       phone: phone ? formatE164Phone(phone) : null,
+      secondPhone: secondPhone ? formatE164Phone(secondPhone) : null,
       cognitoSub: null,
       emailVerified: false,
     })
@@ -530,20 +570,32 @@ export async function createCartPaymentOrder(input: {
   shipping: ShippingDetails
   guestItems?: GuestCartItem[]
 }) {
+  const inputShipping = normalizeShippingDetails(input.shipping)
+  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
+
+  if (secondPhoneError) {
+    return { success: false, message: secondPhoneError }
+  }
+
   let userId = await getCurrentDbUserId()
 
   if (!userId) {
-    if (!input.shipping.email) {
+    if (!inputShipping.email) {
       return { success: false, userIsNotLoggedIn: true, message: "Login required" }
     }
     try {
-      userId = await resolveGuestUserId(input.shipping.email, input.shipping.fullName, input.shipping.phone)
+      userId = await resolveGuestUserId(
+        inputShipping.email,
+        inputShipping.fullName,
+        inputShipping.phone,
+        inputShipping.secondPhone,
+      )
     } catch (err) {
       return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
     }
   }
 
-  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+  const shippingResult = await resolveShippingDetails(userId, inputShipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
@@ -596,14 +648,26 @@ export async function createBuyNowPaymentOrder(input: {
   variantId?: string | null
   quantity?: number
 }) {
+  const inputShipping = normalizeShippingDetails(input.shipping)
+  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
+
+  if (secondPhoneError) {
+    return { success: false, message: secondPhoneError }
+  }
+
   let userId = await getCurrentDbUserId()
 
   if (!userId) {
-    if (!input.shipping.email) {
+    if (!inputShipping.email) {
       return { success: false, userIsNotLoggedIn: true, message: "Login required" }
     }
     try {
-      userId = await resolveGuestUserId(input.shipping.email, input.shipping.fullName, input.shipping.phone)
+      userId = await resolveGuestUserId(
+        inputShipping.email,
+        inputShipping.fullName,
+        inputShipping.phone,
+        inputShipping.secondPhone,
+      )
     } catch (err) {
       return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
     }
@@ -613,7 +677,7 @@ export async function createBuyNowPaymentOrder(input: {
     return { success: false, message: "Product id is required" }
   }
 
-  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+  const shippingResult = await resolveShippingDetails(userId, inputShipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
@@ -765,6 +829,16 @@ export async function completeRazorpayPayment(input: {
         }
       }
 
+      if (orderShipping.secondPhone) {
+        await tx
+          .update(users)
+          .set({
+            secondPhone: orderShipping.secondPhone,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId))
+      }
+
       const [order] = await tx
         .insert(orders)
         .values({
@@ -773,6 +847,7 @@ export async function completeRazorpayPayment(input: {
           addressId: orderShipping.addressId ?? null,
           status: "paid",
           shippingPhone: orderShipping.phone,
+          shippingPhone2: orderShipping.secondPhone || null,
           addressLine1: orderShipping.addressLine1,
           addressLine2: orderShipping.addressLine2 ?? null,
           city: orderShipping.city,

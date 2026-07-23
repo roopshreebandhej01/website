@@ -1,6 +1,8 @@
 import { Metadata } from "next";
-import Link from "next/link";
 import { PolicySidebar } from "@/components/common/PolicySidebar";
+
+export const dynamic = "force-static";
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Roopshree Shopping Policies",

@@ -11,6 +11,7 @@ export type ProfileView = {
   fullName: string
   name: string
   phone: string
+  secondPhone: string
 }
 
 type SessionUser = {
@@ -60,6 +61,7 @@ export async function getProfileService(sessionUser: SessionUser) {
       fullName: fallbackName,
       name: fallbackName,
       phone: getDisplayPhoneNumber(sessionUser.phone),
+      secondPhone: '',
     } satisfies ProfileView
   }
 
@@ -68,6 +70,7 @@ export async function getProfileService(sessionUser: SessionUser) {
     fullName: profile.name,
     name: profile.name,
     phone: getDisplayPhoneNumber(profile.phone ?? sessionUser.phone),
+    secondPhone: getDisplayPhoneNumber(profile.secondPhone),
   } satisfies ProfileView
 }
 
@@ -98,6 +101,7 @@ export async function updateProfileService(
     fullName: profile?.name ?? payload.fullName,
     name: profile?.name ?? payload.fullName,
     phone: profile?.phone ?? payload.phone,
+    secondPhone: profile?.secondPhone ?? payload.secondPhone ?? '',
   } satisfies ProfileView
 }
 

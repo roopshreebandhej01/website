@@ -53,6 +53,10 @@ export default function Details({ id }: { id: string }) {
     orderInfo?.users?.phone ||
     orderInfo?.order?.shippingPhone ||
     "-";
+  const customerPhone2 =
+    orderInfo?.order?.shippingPhone2 ||
+    orderInfo?.users?.secondPhone ||
+    null;
 
   return (
     <div className="w-full max-w-full mx-auto p-1 space-y-5">
@@ -84,6 +88,12 @@ export default function Details({ id }: { id: string }) {
                       <Phone className="w-4 h-4 text-slate-400" />
                       {customerPhone}
                     </span>
+                    {customerPhone2 ? (
+                      <span className="flex items-center gap-2 text-md text-slate-600">
+                        <Phone className="w-4 h-4 text-slate-400" />
+                        Alternate: {customerPhone2}
+                      </span>
+                    ) : null}
                     <span className="flex items-center gap-2 text-md break-all text-slate-600">
                       <Mail className="w-4 h-4 text-slate-400" />{" "}
                       {orderInfo?.users?.email}

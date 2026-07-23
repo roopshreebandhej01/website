@@ -63,6 +63,8 @@ export default async function Page({
     customerName,
     customerEmail: details.users?.email,
     customerPhone: details.address?.phone ?? details.users?.phone ?? details.order.shippingPhone,
+    customerPhone2:
+      details.order.shippingPhone2 ?? details.users?.secondPhone ?? null,
     shippingAddress,
     subtotal: formatCurrency(subtotal),
     deliveryCharge:

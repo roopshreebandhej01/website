@@ -47,6 +47,7 @@ export async function upsertUserProfileByEmail({
       .set({
         name: payload.fullName,
         phone: payload.phone,
+        secondPhone: payload.secondPhone ?? null,
         updatedAt: new Date(),
       })
       .where(eq(users.email, email))
@@ -66,6 +67,7 @@ export async function upsertUserProfileByEmail({
       email,
       name: payload.fullName,
       phone: payload.phone,
+      secondPhone: payload.secondPhone ?? null,
       emailVerified: true,
     })
     .onConflictDoUpdate({
@@ -73,6 +75,7 @@ export async function upsertUserProfileByEmail({
       set: {
         name: payload.fullName,
         phone: payload.phone,
+        secondPhone: payload.secondPhone ?? null,
         updatedAt: new Date(),
       },
     })

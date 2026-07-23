@@ -246,7 +246,7 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 transition-all duration-300 ${
+        className={` print:hidden fixed inset-x-0 top-0 transition-all duration-300 ${
           isMenuOpen ? "z-[9997]" : "z-50"
         } ${
           hasScrolled || isMenuOpen

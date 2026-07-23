@@ -4,7 +4,11 @@ import Link from "next/link";
 import { FooterNewsletterForm } from "@/components/common/FooterNewsletterForm";
 import { Button } from "@/components/ui/button";
 import { getCatalogCategories } from "@/services/product.service";
-import { IconBrandFacebook, IconBrandInstagram, IconMail } from "@tabler/icons-react";
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconMail,
+} from "@tabler/icons-react";
 
 type FooterLink = {
   label: string;
@@ -43,35 +47,23 @@ const Footer = async () => {
   }
 
   return (
-    <footer className="relative overflow-hidden bg-[#F1E1CD] text-[#3F2617] md:bg-[#C39150]/15">
+    <footer className=" print:hidden relative overflow-hidden bg-[#F1E1CD] text-[#3F2617] md:bg-[#C39150]/15">
       <Image
-
         sizes="100vw"
-
         fill
-
         src="/footer-bg.png"
-
         alt=""
-
         className="hidden object-cover opacity-80 md:block"
-
       />
       <div className="relative mx-auto grid max-w-7xl gap-9 px-5 py-12 sm:px-6 md:grid-cols-[1.25fr_1fr_1fr_1fr_1.4fr] lg:px-8">
         <div>
           <Link href="/" className="relative mb-5 block h-20 w-32">
             <Image
-
               sizes="128px"
-
               fill
-
               src="/header-logo.png"
-
               alt="Roop Shree"
-
               className="object-contain object-left"
-
             />
           </Link>
           <p className="max-w-xs text-xs leading-5 text-[#3F2617]/70">
@@ -80,7 +72,10 @@ const Footer = async () => {
             confidence everywhere.
           </p>
           <div className="mt-5 flex gap-3">
-            <Link href={"https://www.facebook.com/profile.php?id=100090309849419"} target="_blank">
+            <Link
+              href={"https://www.facebook.com/profile.php?id=100090309849419"}
+              target="_blank"
+            >
               <Button
                 aria-label="Facebook"
                 size="icon-sm"
@@ -90,7 +85,10 @@ const Footer = async () => {
                 <IconBrandFacebook className="size-6 text-[#3F2617]/70" />
               </Button>
             </Link>
-            <Link href={"https://www.instagram.com/Roopshreebandhej"} target="_blank">
+            <Link
+              href={"https://www.instagram.com/Roopshreebandhej"}
+              target="_blank"
+            >
               <Button
                 aria-label="Instagram"
                 size="icon-sm"
@@ -135,8 +133,11 @@ const Footer = async () => {
 
           <p>
             Designed & Developed by{" "}
-            <Link href="https://www.avtechnosys.com" target="_blank" className="font-semibold text-[#3F2617]">
-
+            <Link
+              href="https://www.avtechnosys.com"
+              target="_blank"
+              className="font-semibold text-[#3F2617]"
+            >
               AV Technosys
             </Link>
           </p>

@@ -15,6 +15,7 @@ export type CheckoutShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
+  secondPhone?: string
   email?: string
   addressLine1: string
   addressLine2: string
@@ -26,11 +27,15 @@ export type CheckoutShippingDetails = {
 
 const manualAddressId = "manual"
 
-function getAddressShipping(address: AddressView): CheckoutShippingDetails {
+function getAddressShipping(
+  address: AddressView,
+  secondPhone = "",
+): CheckoutShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
+    secondPhone,
     email: "",
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", "),
@@ -41,10 +46,11 @@ function getAddressShipping(address: AddressView): CheckoutShippingDetails {
   }
 }
 
-function getEmptyShipping(): CheckoutShippingDetails {
+function getEmptyShipping(secondPhone = ""): CheckoutShippingDetails {
   return {
     fullName: "",
     phone: "",
+    secondPhone,
     email: "",
     addressLine1: "",
     addressLine2: "",
@@ -77,9 +83,11 @@ function isShippingComplete(shipping: CheckoutShippingDetails, isGuest: boolean)
 export function CheckoutFlow({
   addresses,
   isGuest,
+  secondPhone = "",
 }: {
   addresses: AddressView[]
   isGuest: boolean
+  secondPhone?: string
 }) {
   const searchParams = useSearchParams()
   const source = searchParams.get("source") === "buy-now" ? "buy-now" : "cart"
@@ -95,7 +103,9 @@ export function CheckoutFlow({
   )
 
   const [shipping, setShipping] = useState<CheckoutShippingDetails>(
-    initialAddress ? getAddressShipping(initialAddress) : getEmptyShipping(),
+    initialAddress
+      ? getAddressShipping(initialAddress, secondPhone)
+      : getEmptyShipping(secondPhone),
   )
 
   const items = source === "buy-now" ? (buyNowItem ? [buyNowItem] : []) : cartItems
@@ -159,7 +169,12 @@ export function CheckoutFlow({
                       selected={selectedAddressId === address.id}
                       onSelect={() => {
                         setSelectedAddressId(address.id)
-                        setShipping(getAddressShipping(address))
+                        setShipping((current) =>
+                          getAddressShipping(
+                            address,
+                            current.secondPhone ?? secondPhone,
+                          ),
+                        )
                       }}
                     />
                   ))}
@@ -168,7 +183,9 @@ export function CheckoutFlow({
                     type="button"
                     onClick={() => {
                       setSelectedAddressId(manualAddressId)
-                      setShipping(getEmptyShipping())
+                      setShipping((current) =>
+                        getEmptyShipping(current.secondPhone ?? secondPhone),
+                      )
                     }}
                     className={`flex min-h-12 w-full items-center gap-3 border px-4 py-3 text-left text-sm font-medium transition ${
                       isManualAddress
@@ -236,6 +253,16 @@ export function CheckoutFlow({
                           }))
                         }
                       />
+                      <CheckoutInput
+                        label="Alternate phone no. (Optional)"
+                        value={shipping.secondPhone || ""}
+                        onChange={(value) =>
+                          setShipping((current) => ({
+                            ...current,
+                            secondPhone: value,
+                          }))
+                        }
+                      />
                     </div>
 
                     <CheckoutInput
@@ -298,8 +325,18 @@ export function CheckoutFlow({
                 ) : null}
 
                 {addresses.length > 0 && !isManualAddress ? (
-                  <div className="border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
-                    Selected address will be used for this order.
+                  <div className="space-y-3 border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
+                    <p>Selected address will be used for this order.</p>
+                    <CheckoutInput
+                      label="Alternate phone no. (Optional)"
+                      value={shipping.secondPhone || ""}
+                      onChange={(value) =>
+                        setShipping((current) => ({
+                          ...current,
+                          secondPhone: value,
+                        }))
+                      }
+                    />
                   </div>
                 ) : null}
 
