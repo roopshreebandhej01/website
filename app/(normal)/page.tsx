@@ -77,6 +77,9 @@ function ProductSectionSkeleton({
   );
 }
 
+export const dynamic = "force-static";
+export const revalidate = 600;
+
 function CategorySectionSkeleton() {
   return (
     <section className="bg-white py-7 md:pb-20">
