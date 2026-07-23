@@ -23,6 +23,7 @@ export type InvoiceData = {
   paymentMethod?: string | null;
   paymentStatus?: string | null;
   subtotal: string;
+  deliveryCharge: string;
   total: string;
   items: InvoiceItem[];
 };
@@ -73,10 +74,12 @@ export function OrderInvoice({
               <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#777]">
                 Bill To
               </h2>
-              {/* <p className="mt-3 font-semibold text-black">{invoice.customerName}</p>
+              <p className="mt-3 font-semibold text-black">
+                {invoice.customerName}
+              </p>
               {invoice.customerEmail ? (
                 <p className="mt-1 break-all text-[#666]">{invoice.customerEmail}</p>
-              ) : null} */}
+              ) : null}
               {invoice.customerPhone ? (
                 <p className="mt-1 text-[#666]">{invoice.customerPhone}</p>
               ) : null}
@@ -138,6 +141,10 @@ export function OrderInvoice({
             <div className="flex justify-between gap-4">
               <span className="text-[#666]">Subtotal</span>
               <span className="font-semibold">{invoice.subtotal}</span>
+            </div>
+            <div className="mt-3 flex justify-between gap-4">
+              <span className="text-[#666]">Delivery Charge</span>
+              <span className="font-semibold">{invoice.deliveryCharge}</span>
             </div>
             <div className="mt-3 flex justify-between gap-4 text-lg font-semibold text-black">
               <span>Total</span>

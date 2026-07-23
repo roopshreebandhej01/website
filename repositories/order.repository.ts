@@ -1,7 +1,7 @@
 import { count, desc, eq, inArray, or } from 'drizzle-orm'
 
 import { orderItems, orders, payments } from '@/db/schema/orders'
-import { users } from '@/db/schema/users'
+import { addresses, users } from '@/db/schema/users'
 import { db } from '@/lib/db'
 
 type OrderRecord = {
@@ -95,10 +95,19 @@ export async function findDashboardOrderDetailRow(userId: string, orderId: strin
     .where(eq(payments.orderId, order.id))
     .limit(1)
 
+  const [address] = order.addressId
+    ? await db
+        .select()
+        .from(addresses)
+        .where(eq(addresses.id, order.addressId))
+        .limit(1)
+    : [null]
+
   return {
     order,
     items,
     payment: payment ?? null,
+    address: address ?? null,
   }
 }
 
@@ -134,10 +143,19 @@ export async function findOrderConfirmationDetailRow(orderId: string) {
     user = foundUser ?? null
   }
 
+  const [address] = order.addressId
+    ? await db
+        .select()
+        .from(addresses)
+        .where(eq(addresses.id, order.addressId))
+        .limit(1)
+    : [null]
+
   return {
     order,
     items,
     payment: payment ?? null,
+    address: address ?? null,
     user,
   }
 }

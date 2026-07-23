@@ -1,74 +1,61 @@
-import Image from "next/image"
-import Link from "next/link"
-import type { ReactNode } from "react"
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   Check,
   Download,
-  Heart,
   Mail,
   MapPin,
   PackageCheck,
-  Search,
   ShoppingBag,
-  User,
-} from "lucide-react"
+} from "lucide-react";
 
 type OrderInfo = {
-  orderId: string
-  email: string
-  orderDate: string
-  paymentMethod: string
-  paymentStatus: string
-  estimatedDelivery: string
-  totalPaid: string
-}
+  orderId: string;
+  email: string;
+  orderDate: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  estimatedDelivery: string;
+  deliveryCharge: string;
+  totalPaid: string;
+};
 
 type ShippingAddress = {
-  name: string
-  line1: string
-  line2?: string
-  cityState?: string
-  phone: string
-}
+  name: string;
+  line1: string;
+  line2?: string;
+  cityState?: string;
+  phone: string;
+};
 
 type OrderItem = {
-  product: string
-  variant: string
-  quantity: number
-  total: string
-  image: string
-}
+  product: string;
+  variant: string;
+  quantity: number;
+  total: string;
+  image: string;
+};
 
 export function OrderConfirmationPage({
   order,
   address,
   items,
 }: {
-  order: OrderInfo
-  address: ShippingAddress
-  items: OrderItem[]
+  order: OrderInfo;
+  address: ShippingAddress;
+  items: OrderItem[];
 }) {
-    
-
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-[#fff6ea] text-[#3F2617]">
+    <main className="relative pt-20 isolate min-h-screen overflow-hidden bg-[#fff6ea] text-[#3F2617]">
       <Image
-
         sizes="100vw"
-
         fill
-
         src="/orderconfirm-bg.png"
-
         alt=""
-
         priority
-
         className="-z-10 object-cover object-top"
-
       />
-
-      <OrderConfirmationHeader />
 
       <section className="mx-auto flex w-full max-w-[820px] flex-col items-center px-4 pb-12 pt-8 sm:px-6 lg:px-8">
         <div className="flex size-16 items-center justify-center rounded-full bg-[#59AF52] text-white shadow-sm">
@@ -106,10 +93,16 @@ export function OrderConfirmationPage({
                 </span>
               }
             />
-            <InfoRow label="Estimated Delivery" value={order.estimatedDelivery} />
+            <InfoRow
+              label="Estimated Delivery"
+              value={order.estimatedDelivery}
+            />
           </InfoCard>
 
-          <InfoCard icon={<MapPin className="size-5" />} title="Shipping Address">
+          <InfoCard
+            icon={<MapPin className="size-5" />}
+            title="Shipping Address"
+          >
             <p className="text-sm font-semibold text-[#3F2617]">
               {address.name}
             </p>
@@ -145,17 +138,11 @@ export function OrderConfirmationPage({
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-[#f3dfc7]">
                     <Image
-
                       sizes="48px"
-
                       fill
-
                       src={item.image}
-
                       alt={item.product}
-
                       className="object-cover object-top"
-
                     />
                   </div>
                   <div className="min-w-0">
@@ -176,9 +163,15 @@ export function OrderConfirmationPage({
           </div>
         </div>
 
-        <div className="mt-5 flex w-full items-center justify-between bg-[#3F2617] px-6 py-5 text-white">
-          <p className="text-base font-semibold">Total Paid</p>
-          <p className="text-xl font-semibold">{order.totalPaid}</p>
+        <div className="mt-5 w-full bg-[#3F2617] px-6 py-5 text-white">
+          <div className="flex items-center justify-between gap-4 text-xs text-white/75">
+            <p>Delivery Charge</p>
+            <p className="font-semibold text-white">{order.deliveryCharge}</p>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-4 border-t border-white/15 pt-4">
+            <p className="text-base font-semibold">Total Paid</p>
+            <p className="text-xl font-semibold">{order.totalPaid}</p>
+          </div>
         </div>
 
         <div className="mt-7 grid w-full max-w-[520px] gap-4 sm:grid-cols-2">
@@ -198,91 +191,12 @@ export function OrderConfirmationPage({
         </div>
 
         <p className="mt-8 max-w-sm text-center text-xs font-medium leading-5 text-[#3F2617]/75">
-          Thank you for shopping with Roop Shree. We appreciate your trust in us!
+          Thank you for shopping with Roop Shree. We appreciate your trust in
+          us!
         </p>
       </section>
-
-      <OrderConfirmationFooter />
     </main>
-  )
-}
-
-function OrderConfirmationHeader() {
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-    { label: "Blogs", href: "/blogs" },
-  ]
-
-  return (
-    <header className="mx-auto flex h-16 w-full max-w-[980px] items-center justify-between px-4 sm:px-6 lg:px-8">
-      <Link href="/" className="relative block h-14 w-24 shrink-0">
-        <Image
-
-          sizes="96px"
-
-          fill
-
-          src="/header-logo.png"
-
-          alt="Roop Shree"
-
-          priority
-
-          className="object-contain object-left"
-
-        />
-      </Link>
-
-      <nav className="hidden items-center gap-8 text-[11px] font-semibold text-[#3F2617] md:flex">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="transition hover:text-[#C39150]"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="flex items-center gap-3">
-        <label className="hidden h-8 w-40 items-center gap-2 rounded-full border border-[#3F2617]/45 bg-white/60 px-3 text-[10px] font-medium text-[#3F2617] sm:flex">
-          <input
-            type="search"
-            placeholder="Search for sarees..."
-            className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#3F2617]/65"
-          />
-          <Search className="size-3.5" />
-        </label>
-        <Link href="/dashboard" aria-label="Account">
-          <User className="size-4" />
-        </Link>
-        <Link href="/cart" aria-label="Cart">
-          <ShoppingBag className="size-4" />
-        </Link>
-        <Link href="/dashboard/wishlist" aria-label="Wishlist">
-          <Heart className="size-4" />
-        </Link>
-      </div>
-    </header>
-  )
-}
-
-function OrderConfirmationFooter() {
-  return (
-    <footer className="border-t border-[#C39150]/75 bg-[#FAEBD8]/85">
-      <div className="mx-auto flex max-w-[980px] flex-col gap-2 px-4 py-4 text-[10px] font-medium text-[#3F2617]/65 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-        <p>© 2026 Roopshree. All rights reserved.</p>
-        <p>
-          Designed &amp; Developed by{" "}
-          <span className="font-semibold text-[#3F2617]">AV Technosys</span>
-        </p>
-      </div>
-    </footer>
-  )
+  );
 }
 
 function InfoCard({
@@ -290,9 +204,9 @@ function InfoCard({
   title,
   children,
 }: {
-  icon: ReactNode
-  title: string
-  children: ReactNode
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
 }) {
   return (
     <section className="min-w-0 border border-[#E9CFAF] bg-[#fff8ef]/78 px-5 py-5">
@@ -306,20 +220,14 @@ function InfoCard({
       </div>
       {children}
     </section>
-  )
+  );
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string
-  value: ReactNode
-}) {
+function InfoRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-4 py-2 text-xs font-medium">
       <span className="text-[#3F2617]/72">{label}</span>
       <span className="text-right font-semibold text-[#3F2617]">{value}</span>
     </div>
-  )
+  );
 }

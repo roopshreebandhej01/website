@@ -25,7 +25,7 @@ import {
   notifyFirstOrderEmail,
   notifyOrderConfirmationEmail,
 } from "@/lib/email-notifications"
-import { getS3ObjectPreviewUrl } from "@/lib/s3"
+import { getPaiseOrderSummary } from "@/lib/checkout-pricing"
 
 type ShippingDetails = {
   addressId?: string
@@ -182,19 +182,12 @@ function getOrderNumber() {
 }
 
 function getTotals(items: CheckoutItemSnapshot[]) {
-  const subtotal = items.reduce(
-    (total, item) => total + item.productPrice * item.quantity,
-    0,
+  return getPaiseOrderSummary(
+    items.map((item) => ({
+      price: item.productPrice,
+      quantity: item.quantity,
+    })),
   )
-  const shipping = 0
-  const gst = 0
-
-  return {
-    subtotal,
-    shipping,
-    gst,
-    total: subtotal + shipping + gst,
-  }
 }
 
 function formatDate(date: Date) {

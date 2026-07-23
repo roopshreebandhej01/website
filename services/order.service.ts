@@ -9,6 +9,7 @@ import {
 import { getCurrentDbUserId } from '@/lib/current-db-user'
 import { getCurrentUser } from '@/lib/auth'
 import { getS3ObjectPreviewUrl } from '@/lib/s3'
+import { getPaiseOrderSummary } from '@/lib/checkout-pricing'
 import type { InvoiceData } from '@/components/order/OrderInvoice'
 
 const allowedOrderStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled']
@@ -50,11 +51,33 @@ function getStatusLabel(status: string) {
     .join(' ')
 }
 
-function getSubtotal(items: Array<{ productPrice: number; quantity: number }>) {
-  return items.reduce(
-    (total, item) => total + item.productPrice * item.quantity,
-    0,
+function getOrderPricing(items: Array<{ productPrice: number; quantity: number }>) {
+  return getPaiseOrderSummary(
+    items.map((item) => ({
+      price: item.productPrice,
+      quantity: item.quantity,
+    })),
   )
+}
+
+function getStoredDeliveryCharge(totalAmount: number, subtotal: number) {
+  return Math.max(0, totalAmount - subtotal)
+}
+
+function formatDeliveryCharge(amountInPaise: number) {
+  return amountInPaise > 0 ? formatCurrency(amountInPaise) : 'Free'
+}
+
+function getCustomerName({
+  addressName,
+  userName,
+  userEmail,
+}: {
+  addressName?: string | null
+  userName?: string | null
+  userEmail?: string | null
+}) {
+  return addressName || userName || userEmail?.split('@')[0] || 'Customer'
 }
 
 function mapOrderCard(row: Awaited<ReturnType<typeof listDashboardOrderRows>>[number]) {
@@ -113,11 +136,23 @@ export async function getDashboardOrderDetails(orderId: string) {
     return null
   }
 
-  const subtotal = getSubtotal(row.items)
-  const shipping = 0
-  const gst = Math.max(0, row.order.totalAmount - subtotal - shipping)
+  const pricing = getOrderPricing(row.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    row.order.totalAmount,
+    pricing.subtotal,
+  )
+  const sessionUser = await getCurrentUser()
+  const customerName = getCustomerName({
+    addressName: row.address?.fullName,
+    userName: sessionUser?.name,
+    userEmail: sessionUser?.email,
+  })
 
   return {
+    customer: {
+      name: customerName,
+      email: sessionUser?.email ?? null,
+    },
     order: {
       ...mapOrderCard({ order: row.order, items: row.items }),
       rawStatus: row.order.status,
@@ -126,7 +161,11 @@ export async function getDashboardOrderDetails(orderId: string) {
       totalAmount: row.order.totalAmount,
     },
     summary: [
-      { label: 'Subtotal', value: formatCurrency(subtotal) },
+      { label: 'Subtotal', value: formatCurrency(pricing.subtotal) },
+      {
+        label: 'Delivery Charge',
+        value: formatDeliveryCharge(deliveryCharge),
+      },
       { label: 'Total', value: formatCurrency(row.order.totalAmount), strong: true },
     ],
     payment: {
@@ -136,8 +175,8 @@ export async function getDashboardOrderDetails(orderId: string) {
       providerPaymentId: row.payment?.providerPaymentId ?? null,
     },
     address: {
-      name: row.order.shippingPhone,
-      phone: row.order.shippingPhone,
+      name: customerName,
+      phone: row.address?.phone ?? row.order.shippingPhone,
       line: [
         row.order.addressLine1,
         row.order.addressLine2,
@@ -168,7 +207,11 @@ export async function getOrderConfirmationDetails(orderId: string) {
     return null
   }
 
-  const subtotal = getSubtotal(details.items)
+  const pricing = getOrderPricing(details.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    details.order.totalAmount,
+    pricing.subtotal,
+  )
 
   return {
     order: {
@@ -180,10 +223,15 @@ export async function getOrderConfirmationDetails(orderId: string) {
         details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
       paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Pending',
       estimatedDelivery: '3 - 5 Days',
+      deliveryCharge: formatDeliveryCharge(deliveryCharge),
       totalPaid: formatCurrency(details.order.totalAmount),
     },
     address: {
-      name: details.user?.name || details.user?.email?.split('@')[0] || 'Customer',
+      name: getCustomerName({
+        addressName: details.address?.fullName,
+        userName: details.user?.name,
+        userEmail: details.user?.email,
+      }),
       line1: [
         details.order.addressLine1,
         details.order.addressLine2,
@@ -212,13 +260,21 @@ export async function getOrderConfirmationInvoiceDetails(orderId: string): Promi
     return null
   }
 
-  const subtotal = getSubtotal(details.items)
+  const pricing = getOrderPricing(details.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    details.order.totalAmount,
+    pricing.subtotal,
+  )
 
   return {
     orderId: details.order.orderNumber || details.order.id,
     orderDate: formatDate(details.order.createdAt),
     status: getStatusLabel(details.order.status),
-    customerName: details.user?.name || details.user?.email?.split('@')[0] || 'Customer',
+    customerName: getCustomerName({
+      addressName: details.address?.fullName,
+      userName: details.user?.name,
+      userEmail: details.user?.email,
+    }),
     customerEmail: details.user?.email ?? null,
     customerPhone: details.order.shippingPhone,
     shippingAddress: [
@@ -235,7 +291,8 @@ export async function getOrderConfirmationInvoiceDetails(orderId: string): Promi
       details.payment?.method?.toUpperCase() ??
       details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
     paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Paid',
-    subtotal: formatCurrency(subtotal),
+    subtotal: formatCurrency(pricing.subtotal),
+    deliveryCharge: formatDeliveryCharge(deliveryCharge),
     total: formatCurrency(details.order.totalAmount),
     items: details.items.map((item) => ({
       id: item.id,

@@ -61,7 +61,8 @@ export function OrderDetailPage({
               Shipping
             </span>
           </div>
-          <p className="mt-3 text-sm font-semibold">{details.address.phone}</p>
+          <p className="mt-3 text-sm font-semibold">{details.address.name}</p>
+          <p className="mt-1 text-xs text-[#555]">{details.address.phone}</p>
           <p className="mt-2 text-xs leading-5 text-[#555]">
             {details.address.line}
           </p>
