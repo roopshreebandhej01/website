@@ -23,6 +23,7 @@ export const users = pgTable(
     name: varchar('name', { length: 160 }).notNull(),
     email: varchar('email', { length: 255 }).notNull(),
     phone: varchar('phone', { length: 20 }),
+    secondPhone: varchar('second_phone', { length: 20 }),
     role: userRoleEnum('role').default('user').notNull(),
     emailVerified: boolean('email_verified').default(false).notNull(),
     ...timestamps,

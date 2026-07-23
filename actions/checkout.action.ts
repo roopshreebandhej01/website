@@ -17,7 +17,7 @@ import {
   products,
   productVariants,
 } from "@/db/schema/products"
-import { addresses } from "@/db/schema/users"
+import { addresses, users } from "@/db/schema/users"
 import { db } from "@/lib/db"
 import { getCurrentDbUserId } from "@/lib/current-db-user"
 import { getCurrentUser } from "@/lib/auth"
@@ -25,18 +25,26 @@ import {
   notifyFirstOrderEmail,
   notifyOrderConfirmationEmail,
 } from "@/lib/email-notifications"
-import { getS3ObjectPreviewUrl } from "@/lib/s3"
+import { getPaiseOrderSummary } from "@/lib/checkout-pricing"
 
 type ShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
+  secondPhone?: string
+  email?: string
   addressLine1: string
   addressLine2?: string
   city: string
   state: string
   postalCode: string
   country?: string
+}
+
+type GuestCartItem = {
+  productId: string
+  variantId?: string | null
+  quantity: number
 }
 
 type CheckoutItemSnapshot = {
@@ -93,6 +101,8 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
     addressId: input.addressId?.trim() || undefined,
     fullName: input.fullName?.trim() ?? "",
     phone: input.phone?.trim() ?? "",
+    secondPhone: input.secondPhone?.trim() || undefined,
+    email: input.email?.trim() || undefined,
     addressLine1: input.addressLine1?.trim() ?? "",
     addressLine2: input.addressLine2?.trim() || undefined,
     city: input.city?.trim() ?? "",
@@ -104,11 +114,13 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
 
 function mapAddressToShipping(
   address: typeof addresses.$inferSelect,
+  secondPhone?: string,
 ): ShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
+    secondPhone,
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", ") || undefined,
     city: address.city,
@@ -130,6 +142,14 @@ async function findUserAddress(userId: string, addressId: string) {
 
 async function resolveShippingDetails(userId: string, input: ShippingDetails) {
   const shipping = normalizeShippingDetails(input)
+  const secondPhoneError = getSecondPhoneValidationError(shipping.secondPhone)
+
+  if (secondPhoneError) {
+    return {
+      ok: false as const,
+      message: secondPhoneError,
+    }
+  }
 
   if (shipping.addressId) {
     const address = await findUserAddress(userId, shipping.addressId)
@@ -138,10 +158,23 @@ async function resolveShippingDetails(userId: string, input: ShippingDetails) {
       return { ok: false as const, message: "Selected address was not found" }
     }
 
-    return { ok: true as const, shipping: mapAddressToShipping(address) }
+    return {
+      ok: true as const,
+      shipping: mapAddressToShipping(address, shipping.secondPhone),
+    }
   }
 
   return validateManualShippingDetails(shipping)
+}
+
+function getSecondPhoneValidationError(secondPhone?: string) {
+  const phone2Digits = secondPhone?.replace(/[^\d]/g, '') ?? ''
+
+  if (phone2Digits && phone2Digits.length !== 10) {
+    return "Alternate phone number must be exactly 10 digits"
+  }
+
+  return null
 }
 
 function validateManualShippingDetails(input: ShippingDetails) {
@@ -174,19 +207,12 @@ function getOrderNumber() {
 }
 
 function getTotals(items: CheckoutItemSnapshot[]) {
-  const subtotal = items.reduce(
-    (total, item) => total + item.productPrice * item.quantity,
-    0,
+  return getPaiseOrderSummary(
+    items.map((item) => ({
+      price: item.productPrice,
+      quantity: item.quantity,
+    })),
   )
-  const shipping = 0
-  const gst = 0
-
-  return {
-    subtotal,
-    shipping,
-    gst,
-    total: subtotal + shipping + gst,
-  }
 }
 
 function formatDate(date: Date) {
@@ -352,7 +378,7 @@ async function getCartCheckoutItems(userId: string) {
       productName: row.name,
       productSlug: row.slug,
       productSku: row.variantSku ?? row.sku,
-      productImage: imageKey ? getS3ObjectPreviewUrl(imageKey) : null,
+      productImage: imageKey || null,
       variantTitle: row.variantTitle,
     } satisfies CheckoutItemSnapshot
   })
@@ -412,28 +438,175 @@ async function getBuyNowCheckoutItem(input: {
     productName: row.name,
     productSlug: row.slug,
     productSku: row.variantSku ?? row.sku,
-    productImage: imageKey ? getS3ObjectPreviewUrl(imageKey) : null,
+    productImage: imageKey || null,
     variantTitle: row.variantTitle,
   } satisfies CheckoutItemSnapshot
 }
 
-export async function createCartPaymentOrder(input: {
-  shipping: ShippingDetails
-}) {
-  const userId = await getCurrentDbUserId()
+function formatE164Phone(phone: string) {
+  let digits = phone.replace(/[^\d]/g, '')
 
-  if (!userId) {
-    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1)
   }
 
-  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+  const withoutCountryCode =
+    digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits
+
+  if (withoutCountryCode.length === 10) {
+    return `+91${withoutCountryCode}`
+  }
+  return phone
+}
+
+async function resolveGuestUserId(
+  email: string,
+  fullName: string,
+  phone?: string,
+  secondPhone?: string,
+) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, normalizedEmail))
+    .limit(1)
+
+  if (existing[0]) {
+    if (existing[0].cognitoSub) {
+      throw new Error("This email is registered. Please sign in to complete your checkout.")
+    }
+    if (secondPhone && secondPhone !== existing[0].secondPhone) {
+      await db
+        .update(users)
+        .set({
+          secondPhone: formatE164Phone(secondPhone),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, existing[0].id))
+    }
+    return existing[0].id
+  }
+
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      email: normalizedEmail,
+      name: fullName.trim(),
+      phone: phone ? formatE164Phone(phone) : null,
+      secondPhone: secondPhone ? formatE164Phone(secondPhone) : null,
+      cognitoSub: null,
+      emailVerified: false,
+    })
+    .returning()
+
+  return newUser.id
+}
+
+async function getGuestCheckoutItems(guestItems: GuestCartItem[]) {
+  const results: CheckoutItemSnapshot[] = []
+
+  for (const guestItem of guestItems) {
+    const qty = Math.max(1, guestItem.quantity)
+
+    const [row] = await db
+      .select({
+        productId: products.id,
+        slug: products.slug,
+        name: products.name,
+        sku: products.sku,
+        basePrice: products.basePrice,
+        imageKey: mediaAssets.key,
+        variantId: productVariants.id,
+        variantTitle: productVariants.title,
+        variantSku: productVariants.sku,
+        variantPrice: productVariants.price,
+        variantBannerImage: productVariants.bannerImage,
+      })
+      .from(products)
+      .leftJoin(
+        productVariants,
+        guestItem.variantId
+          ? eq(productVariants.id, guestItem.variantId)
+          : and(
+              eq(productVariants.productId, products.id),
+              eq(productVariants.isDefault, true),
+              eq(productVariants.isActive, true),
+            ),
+      )
+      .leftJoin(
+        productMedia,
+        and(
+          eq(productMedia.productId, products.id),
+          eq(productMedia.variantId, productVariants.id),
+          eq(productMedia.isPrimary, true),
+        ),
+      )
+      .leftJoin(mediaAssets, eq(mediaAssets.id, productMedia.mediaAssetId))
+      .where(eq(products.id, guestItem.productId))
+      .limit(1)
+
+    if (!row) continue
+
+    const imageKey = row.imageKey ?? row.variantBannerImage
+
+    results.push({
+      productId: row.productId,
+      variantId: row.variantId,
+      quantity: qty,
+      productPrice: row.variantPrice ?? row.basePrice,
+      productName: row.name,
+      productSlug: row.slug,
+      productSku: row.variantSku ?? row.sku,
+      productImage: imageKey || null,
+      variantTitle: row.variantTitle,
+    })
+  }
+
+  return results
+}
+
+export async function createCartPaymentOrder(input: {
+  shipping: ShippingDetails
+  guestItems?: GuestCartItem[]
+}) {
+  const inputShipping = normalizeShippingDetails(input.shipping)
+  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
+
+  if (secondPhoneError) {
+    return { success: false, message: secondPhoneError }
+  }
+
+  let userId = await getCurrentDbUserId()
+
+  if (!userId) {
+    if (!inputShipping.email) {
+      return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+    }
+    try {
+      userId = await resolveGuestUserId(
+        inputShipping.email,
+        inputShipping.fullName,
+        inputShipping.phone,
+        inputShipping.secondPhone,
+      )
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
+    }
+  }
+
+  const shippingResult = await resolveShippingDetails(userId, inputShipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
   }
 
   try {
-    const items = await getCartCheckoutItems(userId)
+    // Logged-in users: read cart from DB. Guests: use items sent from the frontend (prices always re-fetched from DB).
+    const isGuest = !await getCurrentDbUserId()
+    const items = isGuest && input.guestItems?.length
+      ? await getGuestCheckoutItems(input.guestItems)
+      : await getCartCheckoutItems(userId)
 
     if (items.length === 0) {
       return { success: false, message: "Cart is empty" }
@@ -475,17 +648,36 @@ export async function createBuyNowPaymentOrder(input: {
   variantId?: string | null
   quantity?: number
 }) {
-  const userId = await getCurrentDbUserId()
+  const inputShipping = normalizeShippingDetails(input.shipping)
+  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
+
+  if (secondPhoneError) {
+    return { success: false, message: secondPhoneError }
+  }
+
+  let userId = await getCurrentDbUserId()
 
   if (!userId) {
-    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+    if (!inputShipping.email) {
+      return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+    }
+    try {
+      userId = await resolveGuestUserId(
+        inputShipping.email,
+        inputShipping.fullName,
+        inputShipping.phone,
+        inputShipping.secondPhone,
+      )
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
+    }
   }
 
   if (!input.productId) {
     return { success: false, message: "Product id is required" }
   }
 
-  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+  const shippingResult = await resolveShippingDetails(userId, inputShipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
@@ -537,18 +729,14 @@ export async function completeRazorpayPayment(input: {
   checkoutToken: string
   razorpay: RazorpaySuccessPayload
 }) {
-  const userId = await getCurrentDbUserId()
-
-  if (!userId) {
-    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
-  }
-
   try {
     if (!verifyRazorpaySignature(input.razorpay)) {
       return { success: false, message: "Payment verification failed" }
     }
 
     const checkout = readCheckoutPayload(input.checkoutToken)
+    const sessionUserId = await getCurrentDbUserId()
+    const userId = sessionUserId || checkout.userId
 
     if (
       checkout.userId !== userId ||
@@ -641,6 +829,16 @@ export async function completeRazorpayPayment(input: {
         }
       }
 
+      if (orderShipping.secondPhone) {
+        await tx
+          .update(users)
+          .set({
+            secondPhone: orderShipping.secondPhone,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId))
+      }
+
       const [order] = await tx
         .insert(orders)
         .values({
@@ -649,6 +847,7 @@ export async function completeRazorpayPayment(input: {
           addressId: orderShipping.addressId ?? null,
           status: "paid",
           shippingPhone: orderShipping.phone,
+          shippingPhone2: orderShipping.secondPhone || null,
           addressLine1: orderShipping.addressLine1,
           addressLine2: orderShipping.addressLine2 ?? null,
           city: orderShipping.city,
@@ -711,11 +910,11 @@ export async function completeRazorpayPayment(input: {
 
     if (result.source) {
       const sessionUser = await getCurrentUser()
-      const email = sessionUser?.email
+      const email = sessionUser?.email || checkout.shipping.email
 
       if (email) {
         const customerName =
-          sessionUser?.name || email.split("@")[0] || "Customer"
+          sessionUser?.name || checkout.shipping.fullName || email.split("@")[0] || "Customer"
 
         try {
           await notifyOrderConfirmationEmail({

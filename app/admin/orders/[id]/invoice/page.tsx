@@ -38,7 +38,9 @@ export default async function Page({
     (sum, item) => sum + item.productPrice * item.quantity,
     0,
   );
+  const deliveryCharge = Math.max(0, details.order.totalAmount - subtotal);
   const customerName =
+    details.address?.fullName ||
     details.users?.name ||
     details.users?.email?.split("@")[0] ||
     details.order.shippingPhone ||
@@ -60,9 +62,13 @@ export default async function Page({
     status: getStatusLabel(details.order.status),
     customerName,
     customerEmail: details.users?.email,
-    customerPhone: details.users?.phone ?? details.order.shippingPhone,
+    customerPhone: details.address?.phone ?? details.users?.phone ?? details.order.shippingPhone,
+    customerPhone2:
+      details.order.shippingPhone2 ?? details.users?.secondPhone ?? null,
     shippingAddress,
     subtotal: formatCurrency(subtotal),
+    deliveryCharge:
+      deliveryCharge > 0 ? formatCurrency(deliveryCharge) : "Free",
     total: formatCurrency(details.order.totalAmount),
     items: details.items.map((item) => ({
       id: item.id,

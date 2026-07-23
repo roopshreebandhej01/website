@@ -61,7 +61,13 @@ export function OrderDetailPage({
               Shipping
             </span>
           </div>
-          <p className="mt-3 text-sm font-semibold">{details.address.phone}</p>
+          <p className="mt-3 text-sm font-semibold">{details.address.name}</p>
+          <p className="mt-1 text-xs text-[#555]">{details.address.phone}</p>
+          {details.address.secondPhone ? (
+            <p className="mt-1 text-xs text-[#555]">
+              Alternate: {details.address.secondPhone}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs leading-5 text-[#555]">
             {details.address.line}
           </p>

@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { CheckCircle2, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 
 import { useEffect, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
-import { fetchOrderDetails, updateOrderStatus } from "@/helper/index"; // server action
+import { fetchOrderDetails } from "@/helper/index"; // server action
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { NEXT_PUBLIC_S3_BASE_URL } from "@/env";
-import { toast } from "sonner";
 export default function Details({ id }: { id: string }) {
   const [orderInfo, setOrderInfo] = useState<any>(null);
   const [isPending, startTransition] = useTransition();
@@ -23,13 +22,6 @@ export default function Details({ id }: { id: string }) {
       setOrderInfo(data);
     });
   }, [id]);
-
-  const steps = [
-    { label: "Order Confirmed", date: "Aug 16, 2023" },
-    { label: "Order Shipped", date: "Aug 22, 2023" },
-    { label: "Out for Delivery", date: "Aug 28, 2023" },
-    { label: "Delivered", date: "Aug 28, 2023" },
-  ];
 
   if (isPending || !orderInfo) {
     return (
@@ -47,6 +39,24 @@ export default function Details({ id }: { id: string }) {
       (sum: number, item: any) => sum + item.productPrice * item.quantity,
       0,
     ) || 0;
+  const deliveryCharge = Math.max(
+    0,
+    (orderInfo?.order?.totalAmount || 0) - subtotal,
+  );
+  const customerName =
+    orderInfo?.address?.fullName ||
+    orderInfo?.users?.name ||
+    orderInfo?.users?.email?.split("@")[0] ||
+    "Customer";
+  const customerPhone =
+    orderInfo?.address?.phone ||
+    orderInfo?.users?.phone ||
+    orderInfo?.order?.shippingPhone ||
+    "-";
+  const customerPhone2 =
+    orderInfo?.order?.shippingPhone2 ||
+    orderInfo?.users?.secondPhone ||
+    null;
 
   return (
     <div className="w-full max-w-full mx-auto p-1 space-y-5">
@@ -65,19 +75,25 @@ export default function Details({ id }: { id: string }) {
                 <Avatar className="h-24 w-24">
                   {/* <AvatarImage  src={`${process.env.NEXT_PUBLIC_S3_BASE_URL}/${orderInfo?.user.profileImage}`} />  */}
                   <AvatarFallback>
-                    {orderInfo?.users.name?.slice(0, 1).toUpperCase()}
+                    {customerName.slice(0, 1).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
                   <h3 className="font-bold text-lg">
-                    {orderInfo?.users?.name}
+                    {customerName}
                   </h3>
                   {/* <p className="text-md text-slate-400">12 previous orders</p> */}
                   <div className="flex flex-col gap-1 pt-1">
                     <span className="flex items-center gap-2 text-md text-slate-600">
                       <Phone className="w-4 h-4 text-slate-400" />
-                      {orderInfo?.users?.phone}
+                      {customerPhone}
                     </span>
+                    {customerPhone2 ? (
+                      <span className="flex items-center gap-2 text-md text-slate-600">
+                        <Phone className="w-4 h-4 text-slate-400" />
+                        Alternate: {customerPhone2}
+                      </span>
+                    ) : null}
                     <span className="flex items-center gap-2 text-md break-all text-slate-600">
                       <Mail className="w-4 h-4 text-slate-400" />{" "}
                       {orderInfo?.users?.email}
@@ -107,6 +123,12 @@ export default function Details({ id }: { id: string }) {
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
                 <span className="font-semibold">₹ {subtotal / 100}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Delivery Charge</span>
+                <span className="font-semibold">
+                  {deliveryCharge > 0 ? `₹ ${deliveryCharge / 100}` : "Free"}
+                </span>
               </div>
               <div className="border-t border-slate-100 pt-3 flex justify-between items-center">
                 <span className="font-bold">Total</span>

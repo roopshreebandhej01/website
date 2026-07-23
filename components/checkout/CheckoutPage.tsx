@@ -3,7 +3,15 @@ import Image from "next/image"
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow"
 import type { AddressView } from "@/services/address.service"
 
-export function CheckoutPage({ addresses }: { addresses: AddressView[] }) {
+export function CheckoutPage({
+  addresses,
+  isGuest,
+  secondPhone = "",
+}: {
+  addresses: AddressView[]
+  isGuest: boolean
+  secondPhone?: string
+}) {
   return (
     <main className="min-h-screen overflow-x-hidden pt-16">
       <section className="relative isolate min-h-screen overflow-x-hidden">
@@ -17,7 +25,11 @@ export function CheckoutPage({ addresses }: { addresses: AddressView[] }) {
         />
 
         <div className="mx-auto w-full max-w-[760px] px-4 pb-12 pt-7 sm:px-6 md:pb-20 md:pt-12 lg:px-0">
-          <CheckoutFlow addresses={addresses} />
+          <CheckoutFlow
+            addresses={addresses}
+            isGuest={isGuest}
+            secondPhone={secondPhone}
+          />
         </div>
       </section>
     </main>

@@ -276,7 +276,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. User Session Refresh & Route Protection
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/checkout')
+  const isProtectedRoute = pathname.startsWith('/dashboard')
   const refreshToken = request.cookies.get(authCookieNames.refreshToken)?.value
 
   // If on a protected route but no refresh token is present, redirect to /auth

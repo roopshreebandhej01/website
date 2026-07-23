@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Check } from "lucide-react"
 
 import {
   completeRazorpayPayment,
@@ -59,18 +60,21 @@ export function CheckoutReviewModal({
   summary,
   source,
   shipping,
+  isGuest,
   onClose,
 }: {
   items: CartItem[]
   summary: CartSummary
   source: "cart" | "buy-now"
   shipping: CheckoutShippingDetails
+  isGuest: boolean
   onClose: () => void
 }) {
   const router = useRouter()
   const { showToast } = useToast()
   const clearCart = useCartStore((state) => state.clearCart)
   const [isPaying, setIsPaying] = useState(false)
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false)
 
   async function loadRazorpayScript() {
     if (window.Razorpay) return true
@@ -104,7 +108,16 @@ export function CheckoutReviewModal({
               variantId: buyNowItem?.variantId,
               quantity: buyNowItem?.quantity ?? 1,
             })
-          : await createCartPaymentOrder({ shipping })
+          : await createCartPaymentOrder({
+              shipping,
+              guestItems: isGuest
+                ? items.map((item) => ({
+                    productId: item.dbProductId ?? item.productId,
+                    variantId: item.variantId,
+                    quantity: item.quantity,
+                  }))
+                : undefined,
+            })
 
       if (orderResult.userIsNotLoggedIn) {
         router.push("/auth?callbackUrl=/checkout")
@@ -134,39 +147,48 @@ export function CheckoutReviewModal({
           color: "#C39150",
         },
         handler: async (response) => {
-          const completeResult = await completeRazorpayPayment({
-            checkoutToken: orderResult.checkoutToken,
-            razorpay: response,
-          })
-
-          if (!completeResult.success) {
-            showToast({
-              title: completeResult.message ?? "Payment verification failed",
-              tone: "error",
+          setIsVerifyingPayment(true)
+          try {
+            const completeResult = await completeRazorpayPayment({
+              checkoutToken: orderResult.checkoutToken,
+              razorpay: response,
             })
-            return
+
+            if (!completeResult.success) {
+              setIsVerifyingPayment(false)
+              showToast({
+                title: completeResult.message ?? "Payment verification failed",
+                tone: "error",
+              })
+              return
+            }
+
+            if (!completeResult.orderId) {
+              setIsVerifyingPayment(false)
+              showToast({
+                title: "Order confirmation is unavailable",
+                tone: "error",
+              })
+              return
+            }
+
+            if (completeResult.source === "cart") {
+              clearCart()
+            } else {
+              window.sessionStorage.removeItem("roopshree-buy-now")
+            }
+
+            const confirmationUrl = `/order-confirmation?orderId=${encodeURIComponent(
+              completeResult.orderId,
+            )}`
+
+            showToast({ title: "Payment successful", tone: "success" })
+            window.location.assign(confirmationUrl)
+          } catch (err) {
+            console.error("Payment confirmation error:", err)
+            setIsVerifyingPayment(false)
+            showToast({ title: "Unable to verify payment", tone: "error" })
           }
-
-          if (!completeResult.orderId) {
-            showToast({
-              title: "Order confirmation is unavailable",
-              tone: "error",
-            })
-            return
-          }
-
-          if (completeResult.source === "cart") {
-            clearCart()
-          } else {
-            window.sessionStorage.removeItem("roopshree-buy-now")
-          }
-
-          const confirmationUrl = `/order-confirmation?orderId=${encodeURIComponent(
-            completeResult.orderId,
-          )}`
-
-          showToast({ title: "Payment successful", tone: "success" })
-          window.location.assign(confirmationUrl)
         },
       })
 
@@ -185,6 +207,23 @@ export function CheckoutReviewModal({
 
   return (
     <>
+      {isVerifyingPayment && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <div className="flex w-full max-w-sm flex-col items-center justify-center rounded bg-white p-8 text-center text-[#3F2617] shadow-2xl">
+            <div className="relative flex size-16 items-center justify-center">
+              <div className="absolute inset-0 animate-spin rounded-full border-4 border-[#C39150]/20 border-t-[#C39150]" />
+              <Check className="size-6 text-[#C39150]" />
+            </div>
+            <h3 className="mt-5 font-heading text-xl font-semibold text-[#3F2617]">
+              Payment Received!
+            </h3>
+            <p className="mt-2 text-xs font-medium text-[#3F2617]/75">
+              Please wait while we verify your payment and finalize your order...
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)_24px] items-center">
         <BackButton onClick={onClose} />
         <div className="col-start-2">
@@ -200,7 +239,9 @@ export function CheckoutReviewModal({
 
           <div className="mt-5 space-y-3">
             <ReviewBlock label="Contact">
-              {shipping.fullName || "-"} · {shipping.phone || "-"}
+              {[shipping.fullName || "-", shipping.phone || "-", shipping.secondPhone]
+                .filter(Boolean)
+                .join(" · ")}
             </ReviewBlock>
             <ReviewBlock label="Ship To">
               {[

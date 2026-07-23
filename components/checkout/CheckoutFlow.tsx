@@ -15,6 +15,8 @@ export type CheckoutShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
+  secondPhone?: string
+  email?: string
   addressLine1: string
   addressLine2: string
   city: string
@@ -25,11 +27,16 @@ export type CheckoutShippingDetails = {
 
 const manualAddressId = "manual"
 
-function getAddressShipping(address: AddressView): CheckoutShippingDetails {
+function getAddressShipping(
+  address: AddressView,
+  secondPhone = "",
+): CheckoutShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
+    secondPhone,
+    email: "",
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", "),
     city: address.city,
@@ -39,10 +46,12 @@ function getAddressShipping(address: AddressView): CheckoutShippingDetails {
   }
 }
 
-function getEmptyShipping(): CheckoutShippingDetails {
+function getEmptyShipping(secondPhone = ""): CheckoutShippingDetails {
   return {
     fullName: "",
     phone: "",
+    secondPhone,
+    email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -56,8 +65,8 @@ function getInitialAddress(addresses: AddressView[]) {
   return addresses.find((address) => address.isDefault) ?? addresses[0] ?? null
 }
 
-function isShippingComplete(shipping: CheckoutShippingDetails) {
-  return Boolean(
+function isShippingComplete(shipping: CheckoutShippingDetails, isGuest: boolean) {
+  const isBaseComplete = Boolean(
     shipping.fullName.trim() &&
       shipping.phone.trim() &&
       shipping.addressLine1.trim() &&
@@ -65,9 +74,21 @@ function isShippingComplete(shipping: CheckoutShippingDetails) {
       shipping.state.trim() &&
       shipping.postalCode.trim(),
   )
+  if (isGuest) {
+    return isBaseComplete && Boolean(shipping.email?.trim())
+  }
+  return isBaseComplete
 }
 
-export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
+export function CheckoutFlow({
+  addresses,
+  isGuest,
+  secondPhone = "",
+}: {
+  addresses: AddressView[]
+  isGuest: boolean
+  secondPhone?: string
+}) {
   const searchParams = useSearchParams()
   const source = searchParams.get("source") === "buy-now" ? "buy-now" : "cart"
 
@@ -82,14 +103,16 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
   )
 
   const [shipping, setShipping] = useState<CheckoutShippingDetails>(
-    initialAddress ? getAddressShipping(initialAddress) : getEmptyShipping(),
+    initialAddress
+      ? getAddressShipping(initialAddress, secondPhone)
+      : getEmptyShipping(secondPhone),
   )
 
   const items = source === "buy-now" ? (buyNowItem ? [buyNowItem] : []) : cartItems
   const summary = getCartSummary(items)
 
   const isManualAddress = selectedAddressId === manualAddressId
-  const canReviewOrder = items.length > 0 && isShippingComplete(shipping)
+  const canReviewOrder = items.length > 0 && isShippingComplete(shipping, isGuest)
 
   useEffect(() => {
     if (source !== "buy-now") return
@@ -120,6 +143,7 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
           summary={summary}
           source={source}
           shipping={shipping}
+          isGuest={isGuest}
           onClose={() => setIsReviewOpen(false)}
         />
       ) : (
@@ -145,7 +169,12 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
                       selected={selectedAddressId === address.id}
                       onSelect={() => {
                         setSelectedAddressId(address.id)
-                        setShipping(getAddressShipping(address))
+                        setShipping((current) =>
+                          getAddressShipping(
+                            address,
+                            current.secondPhone ?? secondPhone,
+                          ),
+                        )
                       }}
                     />
                   ))}
@@ -154,7 +183,9 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
                     type="button"
                     onClick={() => {
                       setSelectedAddressId(manualAddressId)
-                      setShipping(getEmptyShipping())
+                      setShipping((current) =>
+                        getEmptyShipping(current.secondPhone ?? secondPhone),
+                      )
                     }}
                     className={`flex min-h-12 w-full items-center gap-3 border px-4 py-3 text-left text-sm font-medium transition ${
                       isManualAddress
@@ -186,6 +217,20 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
               >
                 {addresses.length === 0 || isManualAddress ? (
                   <>
+                    {isGuest ? (
+                      <div className="mb-3">
+                        <CheckoutInput
+                          label="Email Address"
+                          value={shipping.email || ""}
+                          onChange={(value) =>
+                            setShipping((current) => ({
+                              ...current,
+                              email: value,
+                            }))
+                          }
+                        />
+                      </div>
+                    ) : null}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <CheckoutInput
                         label="Full Name"
@@ -205,6 +250,16 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
                           setShipping((current) => ({
                             ...current,
                             phone: value,
+                          }))
+                        }
+                      />
+                      <CheckoutInput
+                        label="Alternate phone no. (Optional)"
+                        value={shipping.secondPhone || ""}
+                        onChange={(value) =>
+                          setShipping((current) => ({
+                            ...current,
+                            secondPhone: value,
                           }))
                         }
                       />
@@ -270,8 +325,18 @@ export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
                 ) : null}
 
                 {addresses.length > 0 && !isManualAddress ? (
-                  <div className="border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
-                    Selected address will be used for this order.
+                  <div className="space-y-3 border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
+                    <p>Selected address will be used for this order.</p>
+                    <CheckoutInput
+                      label="Alternate phone no. (Optional)"
+                      value={shipping.secondPhone || ""}
+                      onChange={(value) =>
+                        setShipping((current) => ({
+                          ...current,
+                          secondPhone: value,
+                        }))
+                      }
+                    />
                   </div>
                 ) : null}
 

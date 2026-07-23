@@ -22,8 +22,8 @@ export function StoreHydrator({
 
     async function hydrateStores() {
       if (!isAuthenticated) {
-        clearCart();
-        clearWishlist();
+        // Guest users: keep their local Zustand cart/wishlist as-is.
+        // Do NOT clear or sync with DB.
         return;
       }
 

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
-import Link from "next/link";
 import { PolicySidebar } from "@/components/common/PolicySidebar";
+
+export const dynamic = "force-static";
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Our Privacy Policy | Roopshree",
@@ -99,38 +101,15 @@ export default function PrivacyPolicy() {
                 </h2>
               </div>
               <p className="mb-3">We may collect:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Name</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Mobile number</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Email address</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Shipping and billing address</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Payment details (processed securely through payment
-                    gateways)
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Order history</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Device and browser information</span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Name</li>
+                <li>Mobile number</li>
+                <li>Email address</li>
+                <li>Shipping and billing address</li>
+                <li>Payment details (processed securely through payment
+                    gateways)</li>
+                <li>Order history</li>
+                <li>Device and browser information</li>
               </ul>
             </section>
 
@@ -145,33 +124,13 @@ export default function PrivacyPolicy() {
                 </h2>
               </div>
               <p className="mb-3">We use your information to:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Process orders</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Deliver products</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Provide customer support</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Send order updates</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Improve our website and services</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Send promotional offers (only if you choose to receive them)
-                  </span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Process orders</li>
+                <li>Deliver products</li>
+                <li>Provide customer support</li>
+                <li>Send order updates</li>
+                <li>Improve our website and services</li>
+                <li>Send promotional offers (only if you choose to receive them)</li>
               </ul>
             </section>
 
@@ -204,23 +163,11 @@ export default function PrivacyPolicy() {
               <p className="mb-3">
                 We may use trusted third-party service providers for:
               </p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Payment processing</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Shipping</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Website analytics</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>SMS and email notifications</span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Payment processing</li>
+                <li>Shipping</li>
+                <li>Website analytics</li>
+                <li>SMS and email notifications</li>
               </ul>
               <p className="mt-4">
                 These providers receive only the information necessary to
@@ -255,22 +202,11 @@ export default function PrivacyPolicy() {
                 </h2>
               </div>
               <p className="mb-3">You may request to:</p>
-              <ul className="list-none space-y-3 pl-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Access your information</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>Correct inaccurate information</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#C39150] mt-1.5">•</span>
-                  <span>
-                    Delete your personal information (subject to legal
-                    obligations)
-                  </span>
-                </li>
+              <ul className="list-disc space-y-3 pl-5 marker:text-[#C39150]">
+                <li>Access your information</li>
+                <li>Correct inaccurate information</li>
+                <li>Delete your personal information (subject to legal
+                    obligations)</li>
               </ul>
             </section>
 
@@ -381,12 +317,12 @@ export default function PrivacyPolicy() {
                         WhatsApp
                       </h4>
                       <a
-                        href="https://wa.me/919529888006"
+                        href="https://wa.me/917627028842"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block text-sm text-[#3F2617]/80 hover:text-[#C39150] transition-colors hover:underline"
                       >
-                        Chat on WhatsApp (+91 95298 88006)
+                        Chat on WhatsApp (+91 7627028842)
                       </a>
                     </div>
                   </div>

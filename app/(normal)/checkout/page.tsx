@@ -1,17 +1,20 @@
-import { redirect } from "next/navigation"
-
 import { CheckoutPage } from "@/components/checkout/CheckoutPage"
 import { getAddresses } from "@/helper/address/action"
+import { getProfile } from "@/helper/user/action"
 import { getCurrentSession } from "@/lib/auth"
 
 export default async function Page() {
   const session = await getCurrentSession()
 
-  if (!session) {
-    redirect("/auth?callbackUrl=/checkout")
-  }
+  const [addresses, profile] = session
+    ? await Promise.all([getAddresses(), getProfile()])
+    : [[], null]
 
-  const addresses = await getAddresses()
-
-  return <CheckoutPage addresses={addresses} />
+  return (
+    <CheckoutPage
+      addresses={addresses}
+      isGuest={!session}
+      secondPhone={profile?.secondPhone ?? ""}
+    />
+  )
 }

@@ -9,6 +9,7 @@ export default async function Page() {
       name: users.name,
       email: users.email,
       phone: users.phone,
+      secondPhone: users.secondPhone,
       emailVerified: users.emailVerified,
       createdAt: users.createdAt,
     })
@@ -34,6 +35,7 @@ export default async function Page() {
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
+                <th className="px-4 py-3 font-medium">Alternate Phone</th>
                 <th className="px-4 py-3 font-medium">Verified</th>
                 <th className="px-4 py-3 font-medium">Created</th>
               </tr>
@@ -43,7 +45,8 @@ export default async function Page() {
                 <tr key={u.id} className="border-t">
                   <td className="px-4 py-3">{u.name}</td>
                   <td className="px-4 py-3">{u.email}</td>
-                  <td className="px-4 py-3">{u.phone}</td>
+                  <td className="px-4 py-3">{u.phone || "-"}</td>
+                  <td className="px-4 py-3">{u.secondPhone || "-"}</td>
                   <td className="px-4 py-3">{u.emailVerified ? "Yes" : "No"}</td>
                   <td className="px-4 py-3">
                     {u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}
@@ -57,4 +60,3 @@ export default async function Page() {
     </div>
   );
 }
-

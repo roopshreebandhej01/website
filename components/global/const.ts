@@ -1,3 +1,5 @@
+import { getRupeeOrderSummary, type SummaryItem } from "@/lib/checkout-pricing"
+
 export type Product = {
   id: number | string
   variantId?: string | null
@@ -35,11 +37,6 @@ export function productToCartItem(product: Product) {
       : undefined,
   }
 }
-
-
-
-
-
 export function formatPrice(price: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -48,23 +45,8 @@ export function formatPrice(price: number) {
   }).format(price)
 }
 
-export type CartSummaryItem = {
-  price: number
-  quantity: number
-}
+export type CartSummaryItem = SummaryItem
 
 export function getCartSummary(items: CartSummaryItem[]) {
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  )
-  const shipping = 0
-  const gst = 0
-
-  return {
-    subtotal,
-    shipping,
-    gst,
-    total: subtotal + shipping + gst,
-  }
+  return getRupeeOrderSummary(items)
 }

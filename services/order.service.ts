@@ -2,12 +2,15 @@ import {
   countDashboardOrders,
   findDashboardOrderDetailRow,
   findOrderById,
+  findOrderConfirmationDetailRow,
   listDashboardOrderRows,
   updateOrderStatusRecord,
 } from '@/repositories/order.repository'
 import { getCurrentDbUserId } from '@/lib/current-db-user'
 import { getCurrentUser } from '@/lib/auth'
 import { getS3ObjectPreviewUrl } from '@/lib/s3'
+import { getPaiseOrderSummary } from '@/lib/checkout-pricing'
+import type { InvoiceData } from '@/components/order/OrderInvoice'
 
 const allowedOrderStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled']
 
@@ -48,11 +51,33 @@ function getStatusLabel(status: string) {
     .join(' ')
 }
 
-function getSubtotal(items: Array<{ productPrice: number; quantity: number }>) {
-  return items.reduce(
-    (total, item) => total + item.productPrice * item.quantity,
-    0,
+function getOrderPricing(items: Array<{ productPrice: number; quantity: number }>) {
+  return getPaiseOrderSummary(
+    items.map((item) => ({
+      price: item.productPrice,
+      quantity: item.quantity,
+    })),
   )
+}
+
+function getStoredDeliveryCharge(totalAmount: number, subtotal: number) {
+  return Math.max(0, totalAmount - subtotal)
+}
+
+function formatDeliveryCharge(amountInPaise: number) {
+  return amountInPaise > 0 ? formatCurrency(amountInPaise) : 'Free'
+}
+
+function getCustomerName({
+  addressName,
+  userName,
+  userEmail,
+}: {
+  addressName?: string | null
+  userName?: string | null
+  userEmail?: string | null
+}) {
+  return addressName || userName || userEmail?.split('@')[0] || 'Customer'
 }
 
 function mapOrderCard(row: Awaited<ReturnType<typeof listDashboardOrderRows>>[number]) {
@@ -111,11 +136,23 @@ export async function getDashboardOrderDetails(orderId: string) {
     return null
   }
 
-  const subtotal = getSubtotal(row.items)
-  const shipping = 0
-  const gst = Math.max(0, row.order.totalAmount - subtotal - shipping)
+  const pricing = getOrderPricing(row.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    row.order.totalAmount,
+    pricing.subtotal,
+  )
+  const sessionUser = await getCurrentUser()
+  const customerName = getCustomerName({
+    addressName: row.address?.fullName,
+    userName: sessionUser?.name,
+    userEmail: sessionUser?.email,
+  })
 
   return {
+    customer: {
+      name: customerName,
+      email: sessionUser?.email ?? null,
+    },
     order: {
       ...mapOrderCard({ order: row.order, items: row.items }),
       rawStatus: row.order.status,
@@ -124,7 +161,11 @@ export async function getDashboardOrderDetails(orderId: string) {
       totalAmount: row.order.totalAmount,
     },
     summary: [
-      { label: 'Subtotal', value: formatCurrency(subtotal) },
+      { label: 'Subtotal', value: formatCurrency(pricing.subtotal) },
+      {
+        label: 'Delivery Charge',
+        value: formatDeliveryCharge(deliveryCharge),
+      },
       { label: 'Total', value: formatCurrency(row.order.totalAmount), strong: true },
     ],
     payment: {
@@ -134,8 +175,9 @@ export async function getDashboardOrderDetails(orderId: string) {
       providerPaymentId: row.payment?.providerPaymentId ?? null,
     },
     address: {
-      name: row.order.shippingPhone,
-      phone: row.order.shippingPhone,
+      name: customerName,
+      phone: row.address?.phone ?? row.order.shippingPhone,
+      secondPhone: row.order.shippingPhone2,
       line: [
         row.order.addressLine1,
         row.order.addressLine2,
@@ -160,38 +202,109 @@ export async function getDashboardOrderDetails(orderId: string) {
 }
 
 export async function getOrderConfirmationDetails(orderId: string) {
-  const [details, sessionUser] = await Promise.all([
-    getDashboardOrderDetails(orderId),
-    getCurrentUser(),
-  ])
+  const details = await findOrderConfirmationDetailRow(orderId)
 
   if (!details) {
     return null
   }
 
+  const pricing = getOrderPricing(details.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    details.order.totalAmount,
+    pricing.subtotal,
+  )
+
   return {
     order: {
       orderId: details.order.orderNumber,
-      email: sessionUser?.email ?? '',
+      email: details.user?.email ?? '',
       orderDate: formatDate(details.order.createdAt),
       paymentMethod:
-        details.payment.method?.toUpperCase() ??
-        details.payment.provider.toUpperCase(),
-      paymentStatus: details.payment.status,
+        details.payment?.method?.toUpperCase() ??
+        details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
+      paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Pending',
       estimatedDelivery: '3 - 5 Days',
+      deliveryCharge: formatDeliveryCharge(deliveryCharge),
       totalPaid: formatCurrency(details.order.totalAmount),
     },
     address: {
-      name: sessionUser?.name || sessionUser?.email?.split('@')[0] || 'Customer',
-      line1: details.address.line,
-      phone: details.address.phone,
+      name: getCustomerName({
+        addressName: details.address?.fullName,
+        userName: details.user?.name,
+        userEmail: details.user?.email,
+      }),
+      line1: [
+        details.order.addressLine1,
+        details.order.addressLine2,
+        details.order.city,
+        details.order.state,
+        details.order.postalCode,
+      ]
+        .filter(Boolean)
+        .join(', '),
+      phone: details.order.shippingPhone,
+      secondPhone: details.order.shippingPhone2,
     },
     items: details.items.map((item) => ({
-      product: item.product,
-      variant: item.variant || 'Default',
+      product: item.productName,
+      variant: item.variantTitle || 'Default',
       quantity: item.quantity,
-      total: item.total,
-      image: item.image,
+      total: formatCurrency(item.productPrice * item.quantity),
+      image: item.productImage ? getS3ObjectPreviewUrl(item.productImage) : '/home/new-arrival-model.png',
+    })),
+  }
+}
+
+export async function getOrderConfirmationInvoiceDetails(orderId: string): Promise<InvoiceData | null> {
+  const details = await findOrderConfirmationDetailRow(orderId)
+
+  if (!details) {
+    return null
+  }
+
+  const pricing = getOrderPricing(details.items)
+  const deliveryCharge = getStoredDeliveryCharge(
+    details.order.totalAmount,
+    pricing.subtotal,
+  )
+
+  return {
+    orderId: details.order.orderNumber || details.order.id,
+    orderDate: formatDate(details.order.createdAt),
+    status: getStatusLabel(details.order.status),
+    customerName: getCustomerName({
+      addressName: details.address?.fullName,
+      userName: details.user?.name,
+      userEmail: details.user?.email,
+    }),
+    customerEmail: details.user?.email ?? null,
+    customerPhone: details.order.shippingPhone,
+    customerPhone2: details.order.shippingPhone2,
+    shippingAddress: [
+      details.order.addressLine1,
+      details.order.addressLine2,
+      details.order.city,
+      details.order.state,
+      details.order.postalCode,
+      details.order.country,
+    ]
+      .filter(Boolean)
+      .join(', '),
+    paymentMethod:
+      details.payment?.method?.toUpperCase() ??
+      details.payment?.provider?.toUpperCase() ?? 'RAZORPAY',
+    paymentStatus: details.payment ? getStatusLabel(details.payment.status) : 'Paid',
+    subtotal: formatCurrency(pricing.subtotal),
+    deliveryCharge: formatDeliveryCharge(deliveryCharge),
+    total: formatCurrency(details.order.totalAmount),
+    items: details.items.map((item) => ({
+      id: item.id,
+      product: item.productName,
+      sku: item.productSku,
+      variant: item.variantTitle || 'Default',
+      quantity: item.quantity,
+      unitPrice: formatCurrency(item.productPrice),
+      total: formatCurrency(item.productPrice * item.quantity),
     })),
   }
 }

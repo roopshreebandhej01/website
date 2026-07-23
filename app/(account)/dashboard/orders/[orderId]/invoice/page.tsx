@@ -20,13 +20,18 @@ export default async function Page({
     orderDate: details.order.date,
     status: details.order.status,
     customerName: details.address.name || "Customer",
+    customerEmail: details.customer.email,
     customerPhone: details.address.phone,
+    customerPhone2: details.address.secondPhone,
     shippingAddress: details.address.line,
     paymentMethod:
       details.payment.method?.toUpperCase() ??
       details.payment.provider.toUpperCase(),
     paymentStatus: details.payment.status,
     subtotal: details.summary[0]?.value ?? details.order.total,
+    deliveryCharge:
+      details.summary.find((item) => item.label === "Delivery Charge")?.value ??
+      "Free",
     total: details.order.total,
     items: details.items.map((item) => ({
       id: item.id,

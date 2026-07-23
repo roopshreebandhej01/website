@@ -33,7 +33,7 @@ const Heritage = () => {
       <div className="mx-auto grid max-w-7xl items-center gap-9 px-5 sm:px-6 lg:grid-cols-[0.9fr_1fr] lg:gap-16 lg:px-8">
         <div className="order-2 mx-auto w-full max-w-[365px] lg:order-1 lg:max-w-[31rem]">
           <Image
-            src="/new_banners/image 275.png"
+            src="/new_banners/image 291.png"
             alt="Artisan tying Bandhej fabric by hand"
             width={365}
             height={482}
@@ -54,7 +54,7 @@ const Heritage = () => {
             Weaving Stories of Tradition
           </h2>
           <p className="mt-3 font-heading text-[1.35rem] italic leading-none text-[#c39150] sm:text-3xl">
-            Crafted Since 1985
+            Crafted Since 1980
           </p>
 
           <div className="mt-5">

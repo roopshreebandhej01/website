@@ -1,6 +1,6 @@
 {
-  "id": "c24c5164-873e-4f24-b4e6-0245be13ca58",
-  "prevId": "bc904a26-e64f-4dd0-9fd0-1eff4496d149",
+  "id": "afa76964-b1d0-4a48-b937-440aa5981831",
+  "prevId": "c24c5164-873e-4f24-b4e6-0245be13ca58",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -646,6 +646,12 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
+        },
+        "shipping_phone_2": {
+          "name": "shipping_phone_2",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
         },
         "address_line_1": {
           "name": "address_line_1",
@@ -2110,6 +2116,20 @@
           "notNull": true,
           "default": false
         },
+        "is_new_arrival": {
+          "name": "is_new_arrival",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_trending": {
+          "name": "is_trending",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "rating": {
           "name": "rating",
           "type": "integer",
@@ -2811,6 +2831,12 @@
         },
         "phone": {
           "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "second_phone": {
+          "name": "second_phone",
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false

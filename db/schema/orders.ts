@@ -110,6 +110,7 @@ export const orders = pgTable(
     shipedAt: timestamp('shipped_at', { withTimezone: true }),
     deliveredAt: timestamp('delivered_at', { withTimezone: true }),
     shippingPhone: varchar('shipping_phone', { length: 20 }).notNull(),
+    shippingPhone2: varchar('shipping_phone_2', { length: 20 }),
     addressLine1: text('address_line_1').notNull(),
     addressLine2: text('address_line_2'),
     city: varchar('city', { length: 120 }).notNull(),

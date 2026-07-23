@@ -23,8 +23,8 @@ const contactItems = [
   },
   {
     title: "WhatsApp",
-    body: "Chat on WhatsApp\n+91-9529888006",
-    link: "https://wa.me/919529888006?text=Hi",
+    body: "Chat on WhatsApp\n+91-7627028842",
+    link: "https://wa.me/917627028842?text=Hi",
     icon: "brand-whatsapp",
   },
   {
@@ -154,11 +154,17 @@ async function contact() {
 
       <section className="relative isolate overflow-hidden bg-[#F7EFE6]">
         <Image
-          src="/new_banners/Frame 1984079525.png"
-          alt="Red Bandhej fabric with flowers"
-          fill
+
           sizes="100vw"
+
+          fill
+
+          src="/new_banners/Frame 1984079525.png"
+
+          alt="Red Bandhej fabric with flowers"
+
           className="object-cover object-center"
+
         />
         <div className="relative mx-auto flex min-h-[21rem] max-w-7xl items-center px-5 py-14 sm:px-6 lg:px-8">
           <div className="max-w-xl text-[#17110d]">
@@ -174,7 +180,7 @@ async function contact() {
               asChild
               className="mt-9 h-12 rounded-[2px] bg-[#C39150] px-9 text-sm font-semibold text-white hover:bg-[#3F2617]"
             >
-              <Link href="https://wa.me/919529888006">
+              <Link href="https://wa.me/917627028842">
                 <TablerIcon
                   name="brand-whatsapp"
                   className="size-4"

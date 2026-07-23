@@ -149,14 +149,14 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
             <div className="mb-10 flex items-center justify-between">
               <Link
                 href="/"
-                className="relative block h-12 w-20"
+                className="relative block h-14 w-24"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Image
                   src="/header-logo.png"
                   alt="Roop Shree"
                   fill
-                  sizes="80px"
+                  sizes="96px"
                   className="object-contain"
                 />
               </Link>
@@ -246,7 +246,7 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 transition-all duration-300 ${
+        className={` print:hidden fixed inset-x-0 top-0 transition-all duration-300 ${
           isMenuOpen ? "z-[9997]" : "z-50"
         } ${
           hasScrolled || isMenuOpen
@@ -280,14 +280,14 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
 
           <Link
             href="/"
-            className="relative block h-11 w-20 shrink-0 justify-self-center items-center md:justify-self-auto"
+            className="relative block h-16 w-24 shrink-0 justify-self-center items-center md:justify-self-auto"
           >
             <Image
               src="/header-logo.png"
               alt="Roop Shree"
               fill
               priority
-              sizes="80px"
+              sizes="108px"
               className="object-contain"
             />
           </Link>
