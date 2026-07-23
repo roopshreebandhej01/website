@@ -14,6 +14,7 @@ import {
   PrimaryAction,
 } from "@/components/dashboard/DashboardPrimitives"
 import { useFileUpload } from "@/helper/upload/client"
+import { maxImageUploadSizeLabel } from "@/lib/upload-limits"
 import type { getDashboardReviewData } from "@/services/review.service"
 
 type ReviewData = Awaited<ReturnType<typeof getDashboardReviewData>>
@@ -243,7 +244,7 @@ function ReviewModal({
           return {
             key: result.fileKey,
             url: result.fileUrl,
-            contentType: file.type,
+            contentType: result.contentType,
           }
         }),
       )
@@ -351,7 +352,7 @@ function ReviewModal({
               className="mt-2 block w-full text-sm text-[#555] file:mr-4 file:h-10 file:border-0 file:bg-[#C39150] file:px-4 file:text-xs file:font-semibold file:tracking-[0.08em] file:text-white disabled:opacity-60"
             />
             <span className="mt-1 block text-[10px] text-[#777]">
-              Upload up to 5 files. Photos max 5MB, videos max 25MB.
+              Upload up to 5 files. Photos compress to {maxImageUploadSizeLabel} max, videos max 25MB.
             </span>
           </label>
 
