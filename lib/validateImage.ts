@@ -1,5 +1,6 @@
+import { maxImageUploadSize, maxImageUploadSizeLabel } from "@/lib/upload-limits";
+
 const validImageTypes = ["image/jpeg", "image/png", "image/webp"];
-const maxImageSize = 5 * 1024 * 1024;
 
 type ValidateImageOptions = {
   maxSizeMB?: number;
@@ -20,12 +21,14 @@ export function validateImage(
     return { success: false, message: "Only JPG, PNG and WEBP images are allowed" };
   }
 
-  const maxSize = (options.maxSizeMB ?? 5) * 1024 * 1024;
+  const maxSize = options.maxSizeMB
+    ? Math.min(maxImageUploadSize, options.maxSizeMB * 1024 * 1024)
+    : maxImageUploadSize;
 
-  if (file.size > Math.min(maxImageSize, maxSize)) {
+  if (file.size > maxSize) {
     return {
       success: false,
-      message: `Image must be under ${options.maxSizeMB ?? 5}MB`,
+      message: `Image must be under ${maxImageUploadSizeLabel}`,
     };
   }
 

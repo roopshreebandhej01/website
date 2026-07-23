@@ -304,13 +304,50 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
             ) : null}
           </div>
 
+          <div className="mt-4 sm:hidden grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {product.variants.map((variant) => (
+              <button
+                key={variant.id}
+                type="button"
+                onClick={() => {
+                  setSelectedVariantId(variant.id);
+                  setSelectedMediaId(null);
+                  galleryScrollerRef.current?.scrollTo({
+                    left: 0,
+                    behavior: "smooth",
+                  });
+                }}
+                className={`overflow-hidden rounded-[3px] border bg-white text-left transition ${
+                  selectedVariant?.id === variant.id
+                    ? "border-[#c39150] shadow-sm"
+                    : "border-[#d8b278] hover:border-[#c39150]"
+                }`}
+              >
+                <span className="relative block aspect-[0.78] bg-[#f8efe6]">
+                  {variant.image ? (
+                    <Image
+                      src={variant.image}
+                      alt={variant.title}
+                      fill
+                      sizes="120px"
+                      className="object-cover object-top"
+                    />
+                  ) : null}
+                </span>
+                <span className="block truncate px-2 py-2 text-xs font-semibold text-[#3f2617]">
+                  {variant.color ?? variant.title}
+                </span>
+              </button>
+            ))}
+          </div>
+
           <div className="min-w-0 lg:pt-1">
             <h1 className="max-w-2xl font-heading text-[2rem] leading-[1.18] text-black md:text-[2.45rem]">
               {product.name}
             </h1>
 
             {product.short_description ? (
-              <p className="mt-7 line-clamp-2 text-sm leading-5 text-gray-600 whitespace-pre-wrap">
+              <p className="mt-7 text-sm leading-5 text-gray-600 whitespace-pre-wrap">
                 {product.short_description}
               </p>
             ) : null}
@@ -397,7 +434,7 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                 <p className="text-xs font-bold uppercase text-black">
                   Colour: {selectedVariant?.color ?? selectedVariant?.title}
                 </p>
-                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                <div className="mt-4 hidden sm:grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {product.variants.map((variant) => (
                     <button
                       key={variant.id}

@@ -466,26 +466,23 @@ async function resolveGuestUserId(
   secondPhone?: string,
 ) {
   const normalizedEmail = email.trim().toLowerCase()
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(users)
     .where(eq(users.email, normalizedEmail))
     .limit(1)
 
-  if (existing[0]) {
-    if (existing[0].cognitoSub) {
-      throw new Error("This email is registered. Please sign in to complete your checkout.")
-    }
-    if (secondPhone && secondPhone !== existing[0].secondPhone) {
+  if (existing) {
+    if (secondPhone && secondPhone !== existing.secondPhone) {
       await db
         .update(users)
         .set({
           secondPhone: formatE164Phone(secondPhone),
           updatedAt: new Date(),
         })
-        .where(eq(users.id, existing[0].id))
+        .where(eq(users.id, existing.id))
     }
-    return existing[0].id
+    return existing.id
   }
 
   const [newUser] = await db
