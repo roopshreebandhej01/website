@@ -14,7 +14,6 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const session = await getCurrentSession();
-  console.log("Email id is: ", session?.user?.email);
 
   return (
     <>
