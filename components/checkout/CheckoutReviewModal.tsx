@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Check } from "lucide-react"
+import { LoaderCircle } from "lucide-react"
 
 import {
   completeRazorpayPayment,
@@ -212,13 +212,13 @@ export function CheckoutReviewModal({
           <div className="flex w-full max-w-sm flex-col items-center justify-center rounded bg-white p-8 text-center text-[#3F2617] shadow-2xl">
             <div className="relative flex size-16 items-center justify-center">
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-[#C39150]/20 border-t-[#C39150]" />
-              <Check className="size-6 text-[#C39150]" />
+              <LoaderCircle className="size-6 text-[#C39150]" />
             </div>
             <h3 className="mt-5 font-heading text-xl font-semibold text-[#3F2617]">
-              Payment Received!
+              Verifying payment
             </h3>
             <p className="mt-2 text-xs font-medium text-[#3F2617]/75">
-              Please wait while we verify your payment and finalize your order...
+              Please wait while Razorpay confirms your payment and we finalize your order...
             </p>
           </div>
         </div>

@@ -64,7 +64,9 @@ export default function OrderClient({
       <Card>
         <CardHeader>
           <CardTitle>Order Management</CardTitle>
-          <CardDescription>Manage orders from the current order schema</CardDescription>
+          <CardDescription>
+            Manage orders from the current order schema
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -87,7 +89,9 @@ export default function OrderClient({
               label="Order Status"
               selectItems={orderStatus}
               value={selectedOrderStatus}
-              onValueChange={(value) => startTransition(() => updateQuery("status", value))}
+              onValueChange={(value) =>
+                startTransition(() => updateQuery("status", value))
+              }
             />
           </div>
 

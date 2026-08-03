@@ -204,7 +204,7 @@ export async function getDashboardOrderDetails(orderId: string) {
 export async function getOrderConfirmationDetails(orderId: string) {
   const details = await findOrderConfirmationDetailRow(orderId)
 
-  if (!details) {
+  if (!details || details.payment?.status !== 'paid') {
     return null
   }
 
@@ -258,7 +258,7 @@ export async function getOrderConfirmationDetails(orderId: string) {
 export async function getOrderConfirmationInvoiceDetails(orderId: string): Promise<InvoiceData | null> {
   const details = await findOrderConfirmationDetailRow(orderId)
 
-  if (!details) {
+  if (!details || details.payment?.status !== 'paid') {
     return null
   }
 

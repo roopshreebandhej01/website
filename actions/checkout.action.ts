@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto"
 
-import { and, count, eq, sql } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import {
   cartItems,
@@ -20,12 +20,17 @@ import {
 import { addresses, users } from "@/db/schema/users"
 import { db } from "@/lib/db"
 import { getCurrentDbUserId } from "@/lib/current-db-user"
-import { getCurrentUser } from "@/lib/auth"
-import {
-  notifyFirstOrderEmail,
-  notifyOrderConfirmationEmail,
-} from "@/lib/email-notifications"
 import { getPaiseOrderSummary } from "@/lib/checkout-pricing"
+import {
+  fetchRazorpayPayment,
+  getRazorpayKeyId,
+  getRazorpaySecret,
+  isCapturedRazorpayPayment,
+} from "@/lib/razorpay"
+import {
+  saveRazorpayPaymentStatus,
+  sendPurchaseNotifications,
+} from "@/lib/payment-flow"
 
 type ShippingDetails = {
   addressId?: string
@@ -60,6 +65,7 @@ type CheckoutItemSnapshot = {
 }
 
 type CheckoutTokenPayload = {
+  orderId?: string
   userId: string
   source: "cart" | "buy-now"
   providerOrderId: string
@@ -68,6 +74,8 @@ type CheckoutTokenPayload = {
   items: CheckoutItemSnapshot[]
   createdAt: number
 }
+
+type PendingCheckoutOrderPayload = Omit<CheckoutTokenPayload, "providerOrderId">
 
 type RazorpayOrderResponse = {
   id: string
@@ -83,14 +91,6 @@ type RazorpaySuccessPayload = {
 }
 
 const currency = "INR"
-
-function getRazorpayKeyId() {
-  return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-}
-
-function getRazorpaySecret() {
-  return process.env.RAZORPAY_KEY_SECRET
-}
 
 function getCheckoutSigningSecret() {
   return process.env.CHECKOUT_TOKEN_SECRET ?? getRazorpaySecret()
@@ -216,18 +216,6 @@ function getTotals(items: CheckoutItemSnapshot[]) {
       quantity: item.quantity,
     })),
   )
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-function formatCurrency(amountInPaise: number) {
-  return `₹${(amountInPaise / 100).toLocaleString("en-IN")}`
 }
 
 function signCheckoutPayload(payload: CheckoutTokenPayload) {
@@ -566,6 +554,142 @@ async function getGuestCheckoutItems(guestItems: GuestCartItem[]) {
   return results
 }
 
+async function createPendingCheckoutOrder(checkout: PendingCheckoutOrderPayload) {
+  return db.transaction(async (tx) => {
+    let orderShipping = { ...checkout.shipping }
+
+    if (checkout.shipping.addressId) {
+      const [address] = await tx
+        .select()
+        .from(addresses)
+        .where(
+          and(
+            eq(addresses.id, checkout.shipping.addressId),
+            eq(addresses.userId, checkout.userId),
+          ),
+        )
+        .limit(1)
+
+      if (!address) {
+        throw new Error("Selected address was not found")
+      }
+
+      orderShipping = mapAddressToShipping(address, checkout.shipping.secondPhone)
+    } else {
+      const [duplicateAddress] = await tx
+        .select()
+        .from(addresses)
+        .where(
+          and(
+            eq(addresses.userId, checkout.userId),
+            eq(addresses.phone, checkout.shipping.phone),
+            eq(addresses.line1, checkout.shipping.addressLine1),
+            eq(addresses.postalCode, checkout.shipping.postalCode),
+          ),
+        )
+        .limit(1)
+
+      if (!duplicateAddress) {
+        const [anyAddress] = await tx
+          .select()
+          .from(addresses)
+          .where(eq(addresses.userId, checkout.userId))
+          .limit(1)
+
+        const [newSavedAddress] = await tx
+          .insert(addresses)
+          .values({
+            userId: checkout.userId,
+            fullName: checkout.shipping.fullName,
+            phone: checkout.shipping.phone,
+            line1: checkout.shipping.addressLine1,
+            line2: checkout.shipping.addressLine2 || null,
+            city: checkout.shipping.city,
+            state: checkout.shipping.state,
+            postalCode: checkout.shipping.postalCode,
+            country: checkout.shipping.country || "India",
+            isDefault: !anyAddress,
+          })
+          .returning({ id: addresses.id })
+
+        if (newSavedAddress) {
+          orderShipping.addressId = newSavedAddress.id
+        }
+      } else {
+        orderShipping.addressId = duplicateAddress.id
+      }
+    }
+
+    if (orderShipping.secondPhone) {
+      await tx
+        .update(users)
+        .set({
+          secondPhone: orderShipping.secondPhone,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, checkout.userId))
+    }
+
+    const [order] = await tx
+      .insert(orders)
+      .values({
+        orderNumber: getOrderNumber(),
+        userId: checkout.userId,
+        addressId: orderShipping.addressId ?? null,
+        status: "pending",
+        shippingPhone: orderShipping.phone,
+        shippingPhone2: orderShipping.secondPhone || null,
+        addressLine1: orderShipping.addressLine1,
+        addressLine2: orderShipping.addressLine2 ?? null,
+        city: orderShipping.city,
+        state: orderShipping.state,
+        postalCode: orderShipping.postalCode,
+        country: orderShipping.country ?? "India",
+        totalAmount: checkout.amountInPaise,
+      })
+      .returning({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+      })
+
+    await tx.insert(orderItems).values(
+      checkout.items.map((item) => ({
+        orderId: order.id,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        productPrice: item.productPrice,
+        productName: item.productName,
+        productSlug: item.productSlug,
+        productSku: item.productSku,
+        productImage: item.productImage,
+        variantTitle: item.variantTitle,
+      })),
+    )
+
+    return { orderId: order.id, orderNumber: order.orderNumber }
+  })
+}
+
+async function createPendingCheckoutPayment({
+  orderId,
+  checkout,
+}: {
+  orderId: string
+  checkout: CheckoutTokenPayload
+}) {
+  await db.insert(payments).values({
+    orderId,
+    provider: "razorpay",
+    status: "pending",
+    providerOrderId: checkout.providerOrderId,
+    amountInPaise: checkout.amountInPaise,
+    metadata: {
+      source: checkout.source,
+      checkoutCreatedAt: checkout.createdAt,
+    },
+  })
+}
+
 export async function createCartPaymentOrder(input: {
   shipping: ShippingDetails
   guestItems?: GuestCartItem[]
@@ -613,19 +737,30 @@ export async function createCartPaymentOrder(input: {
     }
 
     const totals = getTotals(items)
-    const receipt = getOrderNumber()
-    const razorpayOrder = await createRazorpayOrder({
-      amountInPaise: totals.total,
-      receipt,
-    })
-    const checkoutToken = signCheckoutPayload({
+    const pendingCheckoutPayload = {
       userId,
       source: "cart",
-      providerOrderId: razorpayOrder.id,
       amountInPaise: totals.total,
       shipping: shippingResult.shipping,
       items,
       createdAt: Date.now(),
+    } satisfies PendingCheckoutOrderPayload
+    const pendingOrder = await createPendingCheckoutOrder(pendingCheckoutPayload)
+    const razorpayOrder = await createRazorpayOrder({
+      amountInPaise: totals.total,
+      receipt: pendingOrder.orderNumber,
+    })
+    const checkoutPayload = {
+      ...pendingCheckoutPayload,
+      providerOrderId: razorpayOrder.id,
+    } satisfies CheckoutTokenPayload
+    await createPendingCheckoutPayment({
+      orderId: pendingOrder.orderId,
+      checkout: checkoutPayload,
+    })
+    const checkoutToken = signCheckoutPayload({
+      ...checkoutPayload,
+      orderId: pendingOrder.orderId,
     })
 
     return {
@@ -696,19 +831,30 @@ export async function createBuyNowPaymentOrder(input: {
 
     const items = [item]
     const totals = getTotals(items)
-    const receipt = getOrderNumber()
-    const razorpayOrder = await createRazorpayOrder({
-      amountInPaise: totals.total,
-      receipt,
-    })
-    const checkoutToken = signCheckoutPayload({
+    const pendingCheckoutPayload = {
       userId,
       source: "buy-now",
-      providerOrderId: razorpayOrder.id,
       amountInPaise: totals.total,
       shipping: shippingResult.shipping,
       items,
       createdAt: Date.now(),
+    } satisfies PendingCheckoutOrderPayload
+    const pendingOrder = await createPendingCheckoutOrder(pendingCheckoutPayload)
+    const razorpayOrder = await createRazorpayOrder({
+      amountInPaise: totals.total,
+      receipt: pendingOrder.orderNumber,
+    })
+    const checkoutPayload = {
+      ...pendingCheckoutPayload,
+      providerOrderId: razorpayOrder.id,
+    } satisfies CheckoutTokenPayload
+    await createPendingCheckoutPayment({
+      orderId: pendingOrder.orderId,
+      checkout: checkoutPayload,
+    })
+    const checkoutToken = signCheckoutPayload({
+      ...checkoutPayload,
+      orderId: pendingOrder.orderId,
     })
 
     return {
@@ -751,236 +897,51 @@ export async function completeRazorpayPayment(input: {
       return { success: false, message: "Payment amount mismatch" }
     }
 
-    const result = await db.transaction(async (tx) => {
-      const [existingPayment] = await tx
-        .select({
-          id: payments.id,
-          orderId: payments.orderId,
-        })
-        .from(payments)
-        .where(eq(payments.providerPaymentId, input.razorpay.razorpay_payment_id!))
-        .limit(1)
+    const razorpayPayment = await fetchRazorpayPayment(
+      input.razorpay.razorpay_payment_id!,
+    )
 
-      if (existingPayment) {
-        return { orderId: existingPayment.orderId }
-      }
-
-      let orderShipping = { ...checkout.shipping }
-
-      if (checkout.shipping.addressId) {
-        const [address] = await tx
-          .select()
-          .from(addresses)
-          .where(
-            and(
-              eq(addresses.id, checkout.shipping.addressId),
-              eq(addresses.userId, userId),
-            ),
-          )
-          .limit(1)
-
-        if (!address) {
-          throw new Error("Selected address was not found")
-        }
-
-        orderShipping = mapAddressToShipping(address)
-      } else {
-        const [duplicateAddress] = await tx
-          .select()
-          .from(addresses)
-          .where(
-            and(
-              eq(addresses.userId, userId),
-              eq(addresses.phone, checkout.shipping.phone),
-              eq(addresses.line1, checkout.shipping.addressLine1),
-              eq(addresses.postalCode, checkout.shipping.postalCode),
-            ),
-          )
-          .limit(1)
-
-        if (!duplicateAddress) {
-          const [anyAddress] = await tx
-            .select()
-            .from(addresses)
-            .where(eq(addresses.userId, userId))
-            .limit(1)
-
-          const [newSavedAddress] = await tx
-            .insert(addresses)
-            .values({
-              userId,
-              fullName: checkout.shipping.fullName,
-              phone: checkout.shipping.phone,
-              line1: checkout.shipping.addressLine1,
-              line2: checkout.shipping.addressLine2 || null,
-              city: checkout.shipping.city,
-              state: checkout.shipping.state,
-              postalCode: checkout.shipping.postalCode,
-              country: checkout.shipping.country || "India",
-              isDefault: !anyAddress,
-            })
-            .returning({ id: addresses.id })
-
-          if (newSavedAddress) {
-            orderShipping.addressId = newSavedAddress.id
-          }
-        } else {
-          orderShipping.addressId = duplicateAddress.id
-        }
-      }
-
-      if (orderShipping.secondPhone) {
-        await tx
-          .update(users)
-          .set({
-            secondPhone: orderShipping.secondPhone,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, userId))
-      }
-
-      const [order] = await tx
-        .insert(orders)
-        .values({
-          orderNumber: getOrderNumber(),
-          userId,
-          addressId: orderShipping.addressId ?? null,
-          status: "paid",
-          shippingPhone: orderShipping.phone,
-          shippingPhone2: orderShipping.secondPhone || null,
-          addressLine1: orderShipping.addressLine1,
-          addressLine2: orderShipping.addressLine2 ?? null,
-          city: orderShipping.city,
-          state: orderShipping.state,
-          postalCode: orderShipping.postalCode,
-          country: orderShipping.country ?? "India",
-          totalAmount: checkout.amountInPaise,
-        })
-        .returning({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          createdAt: orders.createdAt,
-          totalAmount: orders.totalAmount,
-        })
-
-      await tx.insert(orderItems).values(
-        checkout.items.map((item) => ({
-          orderId: order.id,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          productPrice: item.productPrice,
-          productName: item.productName,
-          productSlug: item.productSlug,
-          productSku: item.productSku,
-          productImage: item.productImage,
-          variantTitle: item.variantTitle,
-        })),
-      )
-
-      await tx.insert(payments).values({
-        orderId: order.id,
-        provider: "razorpay",
-        status: "paid",
-        providerOrderId: input.razorpay.razorpay_order_id,
-        providerPaymentId: input.razorpay.razorpay_payment_id,
-        amountInPaise: checkout.amountInPaise,
-        metadata: input.razorpay,
-      })
-
-      if (checkout.source === "cart") {
-        await tx.execute(
-          sql`
-            DELETE FROM ${cartItems}
-            USING ${carts}
-            WHERE ${cartItems.cartId} = ${carts.id}
-            AND ${carts.userId} = ${userId}
-          `,
-        )
-      }
-
-      return {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        createdAt: order.createdAt,
-        totalAmount: order.totalAmount,
-        source: checkout.source,
-        items: checkout.items,
-      }
-    })
-
-    if (result.source) {
-      const sessionUser = await getCurrentUser()
-      let email = sessionUser?.email || checkout.shipping.email
-
-      if (!email && userId) {
-        try {
-          const [dbUser] = await db
-            .select({ email: users.email })
-            .from(users)
-            .where(eq(users.id, userId))
-            .limit(1)
-
-          if (dbUser?.email) {
-            email = dbUser.email
-          }
-        } catch (dbError) {
-          console.error("Unable to query user email from DB:", dbError)
-        }
-      }
-
-      if (email) {
-        let customerName = sessionUser?.name || checkout.shipping.fullName
-
-        if (!customerName && userId) {
-          try {
-            const [dbUser] = await db
-              .select({ name: users.name })
-              .from(users)
-              .where(eq(users.id, userId))
-              .limit(1)
-
-            if (dbUser?.name) {
-              customerName = dbUser.name
-            }
-          } catch (_) {}
-        }
-
-        if (!customerName) {
-          customerName = email.split("@")[0] || "Customer"
-        }
-
-        try {
-          await notifyOrderConfirmationEmail({
-            email,
-            customerName,
-            orderId: result.orderNumber,
-            orderDate: formatDate(result.createdAt),
-            productNames: result.items
-              .map((item) => item.productName)
-              .filter(Boolean)
-              .join(", "),
-            orderTotal: formatCurrency(result.totalAmount),
-          })
-        } catch (emailError) {
-          console.error("Unable to send order confirmation email:", emailError)
-        }
-
-        try {
-          const [orderCount] = await db
-            .select({ value: count() })
-            .from(orders)
-            .where(eq(orders.userId, userId))
-
-          if ((orderCount?.value ?? 0) === 1) {
-            await notifyFirstOrderEmail({ email, customerName })
-          }
-        } catch (emailError) {
-          console.error("Unable to send first order email:", emailError)
-        }
-      }
+    if (
+      !isCapturedRazorpayPayment(razorpayPayment) ||
+      razorpayPayment.order_id !== checkout.providerOrderId ||
+      razorpayPayment.amount !== checkout.amountInPaise ||
+      razorpayPayment.currency !== currency
+    ) {
+      return { success: false, message: "Payment verification failed" }
     }
 
-    return { success: true, orderId: result.orderId, source: result.source }
+    const result = await saveRazorpayPaymentStatus({
+      providerOrderId: checkout.providerOrderId,
+      providerPaymentId: razorpayPayment.id,
+      amountInPaise: razorpayPayment.amount,
+      method: razorpayPayment.method,
+      razorpayStatus: razorpayPayment.status,
+      metadata: {
+        checkout: input.razorpay,
+        razorpayPayment,
+      },
+    })
+
+    if (checkout.orderId && result.orderId !== checkout.orderId) {
+      return { success: false, message: "Payment verification failed" }
+    }
+
+    if (checkout.source === "cart") {
+      await db.execute(
+        sql`
+          DELETE FROM ${cartItems}
+          USING ${carts}
+          WHERE ${cartItems.cartId} = ${carts.id}
+          AND ${carts.userId} = ${userId}
+        `,
+      )
+    }
+
+    if (result.shouldNotifyPurchase) {
+      await sendPurchaseNotifications(result.orderId)
+    }
+
+    return { success: true, orderId: result.orderId, source: checkout.source }
   } catch (error) {
     console.error("Complete payment failed:", error)
     return { success: false, message: "Unable to complete payment" }
