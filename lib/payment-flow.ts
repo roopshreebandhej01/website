@@ -1,6 +1,6 @@
-import { and, count, eq, ne } from "drizzle-orm"
+import { and, count, eq, inArray, ne, sql } from "drizzle-orm"
 
-import { orderItems, payments, orders } from "@/db/schema/orders"
+import { cartItems, carts, orderItems, payments, orders } from "@/db/schema/orders"
 import { users } from "@/db/schema/users"
 import { db } from "@/lib/db"
 import {
@@ -24,6 +24,33 @@ type SaveRazorpayPaymentStatusInput = {
 type MappedPaymentStatus = {
   paymentStatus: DbPaymentStatus
   orderStatus: DbOrderStatus
+}
+
+function asPaymentMetadata(value: unknown): PaymentMetadata {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {}
+  }
+
+  return value as PaymentMetadata
+}
+
+function getOrderStatusCondition(orderId: string, status: DbOrderStatus) {
+  switch (status) {
+    case "paid":
+      return and(
+        eq(orders.id, orderId),
+        inArray(orders.status, ["pending", "confirmed", "cancelled"]),
+      )
+    case "confirmed":
+      return and(eq(orders.id, orderId), eq(orders.status, "pending"))
+    case "cancelled":
+      return and(
+        eq(orders.id, orderId),
+        inArray(orders.status, ["pending", "confirmed"]),
+      )
+    default:
+      return eq(orders.id, orderId)
+  }
 }
 
 export function mapRazorpayPaymentStatusToDb(
@@ -68,6 +95,7 @@ export async function saveRazorpayPaymentStatus(
         orderId: payments.orderId,
         status: payments.status,
         amountInPaise: payments.amountInPaise,
+        metadata: payments.metadata,
       })
       .from(payments)
       .where(eq(payments.providerOrderId, input.providerOrderId))
@@ -97,6 +125,12 @@ export async function saveRazorpayPaymentStatus(
       }
     }
 
+    const existingMetadata = asPaymentMetadata(paymentRow.metadata)
+    const nextMetadata = {
+      ...existingMetadata,
+      ...asPaymentMetadata(input.metadata),
+    }
+
     const [updatedPayment] = await tx
       .update(payments)
       .set({
@@ -104,7 +138,7 @@ export async function saveRazorpayPaymentStatus(
         providerPaymentId: input.providerPaymentId ?? null,
         ...(input.amountInPaise ? { amountInPaise: input.amountInPaise } : {}),
         method: input.method ?? null,
-        metadata: input.metadata ?? null,
+        metadata: nextMetadata,
         updatedAt: new Date(),
       })
       .where(
@@ -124,7 +158,24 @@ export async function saveRazorpayPaymentStatus(
         status: mappedStatus.orderStatus,
         updatedAt: new Date(),
       })
-      .where(eq(orders.id, paymentRow.orderId))
+      .where(getOrderStatusCondition(paymentRow.orderId, mappedStatus.orderStatus))
+
+    const clearDbCartUserId = existingMetadata.clearDbCartUserId
+    if (
+      updatedPayment &&
+      mappedStatus.paymentStatus === "paid" &&
+      typeof clearDbCartUserId === "string" &&
+      clearDbCartUserId
+    ) {
+      await tx.execute(
+        sql`
+          DELETE FROM ${cartItems}
+          USING ${carts}
+          WHERE ${cartItems.cartId} = ${carts.id}
+          AND ${carts.userId} = ${clearDbCartUserId}
+        `,
+      )
+    }
 
     return {
       orderId: paymentRow.orderId,

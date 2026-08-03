@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 
 import {
@@ -37,6 +37,9 @@ type RazorpayCheckoutOptions = {
   description: string
   order_id: string
   handler: (response: RazorpayCheckoutSuccess) => void
+  modal?: {
+    ondismiss?: () => void
+  }
   prefill?: {
     name?: string
     contact?: string
@@ -75,6 +78,7 @@ export function CheckoutReviewModal({
   const clearCart = useCartStore((state) => state.clearCart)
   const [isPaying, setIsPaying] = useState(false)
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false)
+  const paymentInFlightRef = useRef(false)
 
   async function loadRazorpayScript() {
     if (window.Razorpay) return true
@@ -89,7 +93,11 @@ export function CheckoutReviewModal({
   }
 
   async function handlePayment() {
+    if (paymentInFlightRef.current) return
+
+    paymentInFlightRef.current = true
     setIsPaying(true)
+    let checkoutOpened = false
 
     try {
       const scriptLoaded = await loadRazorpayScript()
@@ -146,6 +154,13 @@ export function CheckoutReviewModal({
         theme: {
           color: "#C39150",
         },
+        modal: {
+          ondismiss: () => {
+            paymentInFlightRef.current = false
+            setIsPaying(false)
+            setIsVerifyingPayment(false)
+          },
+        },
         handler: async (response) => {
           setIsVerifyingPayment(true)
           try {
@@ -155,6 +170,8 @@ export function CheckoutReviewModal({
             })
 
             if (!completeResult.success) {
+              paymentInFlightRef.current = false
+              setIsPaying(false)
               setIsVerifyingPayment(false)
               showToast({
                 title: completeResult.message ?? "Payment verification failed",
@@ -164,6 +181,8 @@ export function CheckoutReviewModal({
             }
 
             if (!completeResult.orderId) {
+              paymentInFlightRef.current = false
+              setIsPaying(false)
               setIsVerifyingPayment(false)
               showToast({
                 title: "Order confirmation is unavailable",
@@ -182,10 +201,17 @@ export function CheckoutReviewModal({
               completeResult.orderId,
             )}`
 
-            showToast({ title: "Payment successful", tone: "success" })
+            showToast({
+              title: completeResult.paymentFinalized
+                ? "Payment successful"
+                : "Payment verified",
+              tone: "success",
+            })
             window.location.assign(confirmationUrl)
           } catch (err) {
             console.error("Payment confirmation error:", err)
+            paymentInFlightRef.current = false
+            setIsPaying(false)
             setIsVerifyingPayment(false)
             showToast({ title: "Unable to verify payment", tone: "error" })
           }
@@ -193,15 +219,23 @@ export function CheckoutReviewModal({
       })
 
       razorpay.on("payment.failed", () => {
+        paymentInFlightRef.current = false
+        setIsPaying(false)
+        setIsVerifyingPayment(false)
         showToast({ title: "Payment failed", tone: "error" })
       })
 
       razorpay.open()
+      checkoutOpened = true
     } catch (error) {
       console.error(error)
       showToast({ title: "Unable to complete payment", tone: "error" })
     } finally {
-      setIsPaying(false)
+      if (!checkoutOpened) {
+        paymentInFlightRef.current = false
+        setIsPaying(false)
+        setIsVerifyingPayment(false)
+      }
     }
   }
 

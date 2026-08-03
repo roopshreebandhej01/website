@@ -33,6 +33,10 @@ export async function POST(request: Request) {
         return Response.json({ error: "Payment is not captured" }, { status: 400 })
       }
 
+      if (payment.currency !== "INR") {
+        return Response.json({ error: "Payment currency mismatch" }, { status: 400 })
+      }
+
       const result = await saveRazorpayPaymentStatus({
         providerOrderId,
         providerPaymentId: payment.id,
@@ -53,6 +57,10 @@ export async function POST(request: Request) {
     }
 
     if (event.event === "payment.failed") {
+      if (payment.currency !== "INR") {
+        return Response.json({ error: "Payment currency mismatch" }, { status: 400 })
+      }
+
       await saveRazorpayPaymentStatus({
         providerOrderId,
         providerPaymentId: payment.id,

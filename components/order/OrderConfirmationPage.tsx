@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   Check,
+  Clock,
   Download,
   Mail,
   MapPin,
@@ -13,6 +14,7 @@ import {
 type OrderInfo = {
   orderId: string;
   email: string;
+  isPaid: boolean;
   orderDate: string;
   paymentMethod: string;
   paymentStatus: string;
@@ -59,25 +61,39 @@ export function OrderConfirmationPage({
       />
 
       <section className="mx-auto flex w-full max-w-[820px] flex-col items-center px-4 pb-12 pt-8 sm:px-6 lg:px-8">
-        <div className="flex size-16 items-center justify-center rounded-full bg-[#59AF52] text-white shadow-sm">
-          <Check className="size-9 stroke-[3]" />
+        <div
+          className={`flex size-16 items-center justify-center rounded-full text-white shadow-sm ${
+            order.isPaid ? "bg-[#59AF52]" : "bg-[#C39150]"
+          }`}
+        >
+          {order.isPaid ? (
+            <Check className="size-9 stroke-[3]" />
+          ) : (
+            <Clock className="size-8 stroke-[2.5]" />
+          )}
         </div>
 
         <h1 className="mt-5 font-heading text-4xl font-semibold leading-none text-[#3F2617]">
-          Thank You!
+          {order.isPaid ? "Thank You!" : "Payment Verified"}
         </h1>
         <p className="mt-3 text-center text-sm font-medium text-[#3F2617]/75">
-          Your order has been placed successfully.
+          {order.isPaid
+            ? "Your order has been placed successfully."
+            : "Razorpay has verified your payment. Final order confirmation is in progress."}
         </p>
 
         <div className="mt-5 border border-[#C39150]/55 bg-[#fff8ef]/75 px-8 py-3 text-center text-base font-semibold text-[#C39150]">
           Order ID: {order.orderId}
         </div>
 
-        <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs font-medium text-[#3F2617]/75">
-          <Mail className="size-4 text-[#C39150]" />
-          We&apos;ve sent a confirmation email to {order.email}
-        </p>
+        {order.email ? (
+          <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs font-medium text-[#3F2617]/75">
+            <Mail className="size-4 text-[#C39150]" />
+            {order.isPaid
+              ? `We've sent a confirmation email to ${order.email}`
+              : `We'll send a confirmation email to ${order.email} once Razorpay confirms the payment with us.`}
+          </p>
+        ) : null}
 
         <div className="mt-8 grid w-full gap-5 md:grid-cols-2">
           <InfoCard
@@ -89,7 +105,13 @@ export function OrderConfirmationPage({
             <InfoRow
               label="Payment Status"
               value={
-                <span className="rounded bg-[#DFF3D8] px-3 py-1 text-[11px] font-semibold text-[#459B3F]">
+                <span
+                  className={`rounded px-3 py-1 text-[11px] font-semibold ${
+                    order.isPaid
+                      ? "bg-[#DFF3D8] text-[#459B3F]"
+                      : "bg-[#FFF0CC] text-[#9A6816]"
+                  }`}
+                >
                   {order.paymentStatus}
                 </span>
               }
@@ -173,19 +195,27 @@ export function OrderConfirmationPage({
             <p className="font-semibold text-white">{order.deliveryCharge}</p>
           </div>
           <div className="mt-3 flex items-center justify-between gap-4 border-t border-white/15 pt-4">
-            <p className="text-base font-semibold">Total Paid</p>
+            <p className="text-base font-semibold">
+              {order.isPaid ? "Total Paid" : "Total Amount"}
+            </p>
             <p className="text-xl font-semibold">{order.totalPaid}</p>
           </div>
         </div>
 
-        <div className="mt-7 grid w-full max-w-[520px] gap-4 sm:grid-cols-2">
-          <Link
-            href={`/order-confirmation/invoice?orderId=${encodeURIComponent(order.orderId)}`}
-            className="flex h-12 items-center justify-center gap-2 border border-[#3F2617]/35 bg-white/75 text-sm font-semibold text-[#3F2617] transition hover:border-[#C39150] hover:text-[#C39150]"
-          >
-            <Download className="size-4" />
-            Download Invoice
-          </Link>
+        <div
+          className={`mt-7 grid w-full max-w-[520px] gap-4 ${
+            order.isPaid ? "sm:grid-cols-2" : ""
+          }`}
+        >
+          {order.isPaid ? (
+            <Link
+              href={`/order-confirmation/invoice?orderId=${encodeURIComponent(order.orderId)}`}
+              className="flex h-12 items-center justify-center gap-2 border border-[#3F2617]/35 bg-white/75 text-sm font-semibold text-[#3F2617] transition hover:border-[#C39150] hover:text-[#C39150]"
+            >
+              <Download className="size-4" />
+              Download Invoice
+            </Link>
+          ) : null}
           <Link
             href="/shop"
             className="flex h-12 items-center justify-center bg-[#C39150] text-sm font-semibold text-white transition hover:bg-[#3F2617]"

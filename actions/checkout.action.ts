@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto"
 
-import { and, eq, sql } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 
 import {
   cartItems,
@@ -27,10 +27,6 @@ import {
   getRazorpaySecret,
   isCapturedRazorpayPayment,
 } from "@/lib/razorpay"
-import {
-  saveRazorpayPaymentStatus,
-  sendPurchaseNotifications,
-} from "@/lib/payment-flow"
 
 type ShippingDetails = {
   addressId?: string
@@ -91,6 +87,8 @@ type RazorpaySuccessPayload = {
 }
 
 const currency = "INR"
+
+class CheckoutActionError extends Error {}
 
 function getCheckoutSigningSecret() {
   return process.env.CHECKOUT_TOKEN_SECRET ?? getRazorpaySecret()
@@ -218,6 +216,16 @@ function getTotals(items: CheckoutItemSnapshot[]) {
   )
 }
 
+function assertTimingSafeEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left)
+  const rightBuffer = Buffer.from(right)
+
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    crypto.timingSafeEqual(leftBuffer, rightBuffer)
+  )
+}
+
 function signCheckoutPayload(payload: CheckoutTokenPayload) {
   const secret = getCheckoutSigningSecret()
 
@@ -252,12 +260,7 @@ function readCheckoutPayload(token: string): CheckoutTokenPayload {
     .update(body)
     .digest("base64url")
 
-  if (
-    !crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature),
-    )
-  ) {
+  if (!assertTimingSafeEqual(signature, expectedSignature)) {
     throw new Error("Invalid checkout token signature")
   }
 
@@ -284,10 +287,35 @@ function verifyRazorpaySignature(payload: RazorpaySuccessPayload) {
     .update(`${payload.razorpay_order_id}|${payload.razorpay_payment_id}`)
     .digest("hex")
 
-  return crypto.timingSafeEqual(
-    Buffer.from(payload.razorpay_signature),
-    Buffer.from(expectedSignature),
-  )
+  return assertTimingSafeEqual(payload.razorpay_signature, expectedSignature)
+}
+
+function assertCheckoutItemAvailable({
+  productName,
+  productStatus,
+  variantId,
+  variantIsActive,
+  stockQuantity,
+  quantity,
+}: {
+  productName: string
+  productStatus: string
+  variantId: string | null
+  variantIsActive: boolean | null
+  stockQuantity: number | null
+  quantity: number
+}) {
+  if (productStatus !== "active") {
+    throw new CheckoutActionError(`${productName} is not available`)
+  }
+
+  if (!variantId || !variantIsActive) {
+    throw new CheckoutActionError(`${productName} variant is not available`)
+  }
+
+  if ((stockQuantity ?? 0) < quantity) {
+    throw new CheckoutActionError(`${productName} does not have enough stock`)
+  }
 }
 
 async function createRazorpayOrder({
@@ -335,11 +363,14 @@ async function getCartCheckoutItems(userId: string) {
       name: products.name,
       sku: products.sku,
       basePrice: products.basePrice,
+      productStatus: products.status,
       imageKey: mediaAssets.key,
       variantId: productVariants.id,
       variantTitle: productVariants.title,
       variantSku: productVariants.sku,
       variantPrice: productVariants.price,
+      variantIsActive: productVariants.isActive,
+      stockQuantity: productVariants.stockQuantity,
       variantBannerImage: productVariants.bannerImage,
       quantity: cartItems.quantity,
     })
@@ -359,6 +390,15 @@ async function getCartCheckoutItems(userId: string) {
     .where(eq(carts.userId, userId))
 
   return rows.map((row) => {
+    assertCheckoutItemAvailable({
+      productName: row.name,
+      productStatus: row.productStatus,
+      variantId: row.variantId,
+      variantIsActive: row.variantIsActive,
+      stockQuantity: row.stockQuantity,
+      quantity: row.quantity,
+    })
+
     const imageKey = row.imageKey ?? row.variantBannerImage
 
     return {
@@ -387,11 +427,14 @@ async function getBuyNowCheckoutItem(input: {
       name: products.name,
       sku: products.sku,
       basePrice: products.basePrice,
+      productStatus: products.status,
       imageKey: mediaAssets.key,
       variantId: productVariants.id,
       variantTitle: productVariants.title,
       variantSku: productVariants.sku,
       variantPrice: productVariants.price,
+      variantIsActive: productVariants.isActive,
+      stockQuantity: productVariants.stockQuantity,
       variantBannerImage: productVariants.bannerImage,
     })
     .from(products)
@@ -419,12 +462,23 @@ async function getBuyNowCheckoutItem(input: {
 
   if (!row) return null
 
+  const quantity = Math.max(1, Number(input.quantity ?? 1))
+
+  assertCheckoutItemAvailable({
+    productName: row.name,
+    productStatus: row.productStatus,
+    variantId: row.variantId,
+    variantIsActive: row.variantIsActive,
+    stockQuantity: row.stockQuantity,
+    quantity,
+  })
+
   const imageKey = row.imageKey ?? row.variantBannerImage
 
   return {
     productId: row.productId,
     variantId: row.variantId,
-    quantity: Math.max(1, Number(input.quantity ?? 1)),
+    quantity,
     productPrice: row.variantPrice ?? row.basePrice,
     productName: row.name,
     productSlug: row.slug,
@@ -504,11 +558,14 @@ async function getGuestCheckoutItems(guestItems: GuestCartItem[]) {
         name: products.name,
         sku: products.sku,
         basePrice: products.basePrice,
+        productStatus: products.status,
         imageKey: mediaAssets.key,
         variantId: productVariants.id,
         variantTitle: productVariants.title,
         variantSku: productVariants.sku,
         variantPrice: productVariants.price,
+        variantIsActive: productVariants.isActive,
+        stockQuantity: productVariants.stockQuantity,
         variantBannerImage: productVariants.bannerImage,
       })
       .from(products)
@@ -534,7 +591,18 @@ async function getGuestCheckoutItems(guestItems: GuestCartItem[]) {
       .where(eq(products.id, guestItem.productId))
       .limit(1)
 
-    if (!row) continue
+    if (!row) {
+      throw new CheckoutActionError("An item in your cart is no longer available")
+    }
+
+    assertCheckoutItemAvailable({
+      productName: row.name,
+      productStatus: row.productStatus,
+      variantId: row.variantId,
+      variantIsActive: row.variantIsActive,
+      stockQuantity: row.stockQuantity,
+      quantity: qty,
+    })
 
     const imageKey = row.imageKey ?? row.variantBannerImage
 
@@ -673,9 +741,11 @@ async function createPendingCheckoutOrder(checkout: PendingCheckoutOrderPayload)
 async function createPendingCheckoutPayment({
   orderId,
   checkout,
+  clearDbCartUserId,
 }: {
   orderId: string
   checkout: CheckoutTokenPayload
+  clearDbCartUserId?: string | null
 }) {
   await db.insert(payments).values({
     orderId,
@@ -686,8 +756,42 @@ async function createPendingCheckoutPayment({
     metadata: {
       source: checkout.source,
       checkoutCreatedAt: checkout.createdAt,
+      checkoutUserId: checkout.userId,
+      clearDbCartUserId: clearDbCartUserId ?? null,
     },
   })
+}
+
+async function findCheckoutPayment(providerOrderId: string) {
+  const [payment] = await db
+    .select({
+      orderId: payments.orderId,
+      status: payments.status,
+      amountInPaise: payments.amountInPaise,
+      orderTotalAmount: orders.totalAmount,
+    })
+    .from(payments)
+    .innerJoin(orders, eq(orders.id, payments.orderId))
+    .where(eq(payments.providerOrderId, providerOrderId))
+    .limit(1)
+
+  return payment ?? null
+}
+
+async function waitForWebhookPaymentStatus(providerOrderId: string) {
+  const deadline = Date.now() + 5000
+
+  while (Date.now() < deadline) {
+    const payment = await findCheckoutPayment(providerOrderId)
+
+    if (payment?.status === "paid" || payment?.status === "failed") {
+      return payment.status
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  return null
 }
 
 export async function createCartPaymentOrder(input: {
@@ -701,7 +805,8 @@ export async function createCartPaymentOrder(input: {
     return { success: false, message: secondPhoneError }
   }
 
-  let userId = await getCurrentDbUserId()
+  const sessionUserId = await getCurrentDbUserId()
+  let userId = sessionUserId
 
   if (!userId) {
     if (!inputShipping.email) {
@@ -727,7 +832,7 @@ export async function createCartPaymentOrder(input: {
 
   try {
     // Logged-in users: read cart from DB. Guests: use items sent from the frontend (prices always re-fetched from DB).
-    const isGuest = !await getCurrentDbUserId()
+    const isGuest = !sessionUserId
     const items = isGuest && input.guestItems?.length
       ? await getGuestCheckoutItems(input.guestItems)
       : await getCartCheckoutItems(userId)
@@ -757,6 +862,7 @@ export async function createCartPaymentOrder(input: {
     await createPendingCheckoutPayment({
       orderId: pendingOrder.orderId,
       checkout: checkoutPayload,
+      clearDbCartUserId: sessionUserId,
     })
     const checkoutToken = signCheckoutPayload({
       ...checkoutPayload,
@@ -773,7 +879,13 @@ export async function createCartPaymentOrder(input: {
     }
   } catch (error) {
     console.error("Create payment order failed:", error)
-    return { success: false, message: "Unable to start payment" }
+    return {
+      success: false,
+      message:
+        error instanceof CheckoutActionError
+          ? error.message
+          : "Unable to start payment",
+    }
   }
 }
 
@@ -790,7 +902,8 @@ export async function createBuyNowPaymentOrder(input: {
     return { success: false, message: secondPhoneError }
   }
 
-  let userId = await getCurrentDbUserId()
+  const sessionUserId = await getCurrentDbUserId()
+  let userId = sessionUserId
 
   if (!userId) {
     if (!inputShipping.email) {
@@ -851,6 +964,7 @@ export async function createBuyNowPaymentOrder(input: {
     await createPendingCheckoutPayment({
       orderId: pendingOrder.orderId,
       checkout: checkoutPayload,
+      clearDbCartUserId: null,
     })
     const checkoutToken = signCheckoutPayload({
       ...checkoutPayload,
@@ -867,7 +981,13 @@ export async function createBuyNowPaymentOrder(input: {
     }
   } catch (error) {
     console.error("Create buy now payment order failed:", error)
-    return { success: false, message: "Unable to start payment" }
+    return {
+      success: false,
+      message:
+        error instanceof CheckoutActionError
+          ? error.message
+          : "Unable to start payment",
+    }
   }
 }
 
@@ -882,10 +1002,10 @@ export async function completeRazorpayPayment(input: {
 
     const checkout = readCheckoutPayload(input.checkoutToken)
     const sessionUserId = await getCurrentDbUserId()
-    const userId = sessionUserId || checkout.userId
 
     if (
-      checkout.userId !== userId ||
+      !checkout.orderId ||
+      (sessionUserId && checkout.userId !== sessionUserId) ||
       checkout.providerOrderId !== input.razorpay.razorpay_order_id
     ) {
       return { success: false, message: "Payment verification failed" }
@@ -895,6 +1015,17 @@ export async function completeRazorpayPayment(input: {
 
     if (totals.total !== checkout.amountInPaise) {
       return { success: false, message: "Payment amount mismatch" }
+    }
+
+    const payment = await findCheckoutPayment(checkout.providerOrderId)
+
+    if (
+      !payment ||
+      payment.orderId !== checkout.orderId ||
+      payment.amountInPaise !== checkout.amountInPaise ||
+      payment.orderTotalAmount !== checkout.amountInPaise
+    ) {
+      return { success: false, message: "Payment verification failed" }
     }
 
     const razorpayPayment = await fetchRazorpayPayment(
@@ -910,38 +1041,17 @@ export async function completeRazorpayPayment(input: {
       return { success: false, message: "Payment verification failed" }
     }
 
-    const result = await saveRazorpayPaymentStatus({
-      providerOrderId: checkout.providerOrderId,
-      providerPaymentId: razorpayPayment.id,
-      amountInPaise: razorpayPayment.amount,
-      method: razorpayPayment.method,
-      razorpayStatus: razorpayPayment.status,
-      metadata: {
-        checkout: input.razorpay,
-        razorpayPayment,
-      },
-    })
+    const finalizedStatus =
+      payment.status === "paid"
+        ? "paid"
+        : await waitForWebhookPaymentStatus(checkout.providerOrderId)
 
-    if (checkout.orderId && result.orderId !== checkout.orderId) {
-      return { success: false, message: "Payment verification failed" }
+    return {
+      success: true,
+      orderId: checkout.orderId,
+      source: checkout.source,
+      paymentFinalized: finalizedStatus === "paid",
     }
-
-    if (checkout.source === "cart") {
-      await db.execute(
-        sql`
-          DELETE FROM ${cartItems}
-          USING ${carts}
-          WHERE ${cartItems.cartId} = ${carts.id}
-          AND ${carts.userId} = ${userId}
-        `,
-      )
-    }
-
-    if (result.shouldNotifyPurchase) {
-      await sendPurchaseNotifications(result.orderId)
-    }
-
-    return { success: true, orderId: result.orderId, source: checkout.source }
   } catch (error) {
     console.error("Complete payment failed:", error)
     return { success: false, message: "Unable to complete payment" }
