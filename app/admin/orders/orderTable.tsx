@@ -21,6 +21,8 @@ export type OrderRow = {
   totalAmount: number;
   addressLine1: string;
   addressLine2: string | null;
+  userName: string | null;
+  userEmail: string | null;
 };
 
 type OrderTableProps = {
@@ -57,7 +59,7 @@ export default function OrderTable({
         <TableHeader>
           <TableRow>
             <TableHead>S.No</TableHead>
-            <TableHead>Order ID</TableHead>
+            <TableHead>Customer Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Total Amount</TableHead>
             <TableHead>Address Line 1</TableHead>
@@ -72,7 +74,7 @@ export default function OrderTable({
                 className={isPending ? "opacity-60" : ""}
               >
                 <TableCell>{startIndex + index + 1}</TableCell>
-                <TableCell>{order.id}</TableCell>
+                <TableCell>{order.userName || order.userEmail || "Guest"}</TableCell>
                 <TableCell>
                   <div className="min-w-36">
                     <Select

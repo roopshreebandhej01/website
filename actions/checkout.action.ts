@@ -160,7 +160,10 @@ async function resolveShippingDetails(userId: string, input: ShippingDetails) {
 
     return {
       ok: true as const,
-      shipping: mapAddressToShipping(address, shipping.secondPhone),
+      shipping: {
+        ...mapAddressToShipping(address, shipping.secondPhone),
+        email: shipping.email,
+      },
     }
   }
 
@@ -907,11 +910,44 @@ export async function completeRazorpayPayment(input: {
 
     if (result.source) {
       const sessionUser = await getCurrentUser()
-      const email = sessionUser?.email || checkout.shipping.email
+      let email = sessionUser?.email || checkout.shipping.email
+
+      if (!email && userId) {
+        try {
+          const [dbUser] = await db
+            .select({ email: users.email })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1)
+
+          if (dbUser?.email) {
+            email = dbUser.email
+          }
+        } catch (dbError) {
+          console.error("Unable to query user email from DB:", dbError)
+        }
+      }
 
       if (email) {
-        const customerName =
-          sessionUser?.name || checkout.shipping.fullName || email.split("@")[0] || "Customer"
+        let customerName = sessionUser?.name || checkout.shipping.fullName
+
+        if (!customerName && userId) {
+          try {
+            const [dbUser] = await db
+              .select({ name: users.name })
+              .from(users)
+              .where(eq(users.id, userId))
+              .limit(1)
+
+            if (dbUser?.name) {
+              customerName = dbUser.name
+            }
+          } catch (_) {}
+        }
+
+        if (!customerName) {
+          customerName = email.split("@")[0] || "Customer"
+        }
 
         try {
           await notifyOrderConfirmationEmail({

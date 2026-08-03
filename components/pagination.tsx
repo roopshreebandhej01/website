@@ -20,13 +20,17 @@ const ProductPagination = ({ currentPage, totalPages }: Props) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const pageSize = 3;
-
   const pushPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("page", String(page));
-    params.set("page_size", String(pageSize));
+    
+    const currentPageSize = searchParams.get("page_size");
+    if (currentPageSize) {
+      params.set("page_size", currentPageSize);
+    } else {
+      params.delete("page_size");
+    }
 
     router.push(`${pathname}?${params.toString()}`);
   };
