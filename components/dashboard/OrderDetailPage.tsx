@@ -93,7 +93,8 @@ export function OrderDetailPage({
                   <Image
                     src={item.image}
                     alt={item.product}
-                    fill
+                    height={700}
+                    width={700}
                     sizes="56px"
                     className="object-cover object-top"
                   />

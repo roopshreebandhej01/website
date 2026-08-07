@@ -109,7 +109,8 @@ export default function ProductTable({ products }: { products: ProductRow[] }) {
                       <Image
                         src={product.image}
                         alt={product.name}
-                        fill
+                        height={700}
+                        width={700}
                         sizes="48px"
                         className="object-cover"
                       />
@@ -193,8 +194,8 @@ export default function ProductTable({ products }: { products: ProductRow[] }) {
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           <p className="break-words whitespace-pre-wrap">
-                            This removes the product and related rows <br /> from
-                            the database.
+                            This removes the product and related rows <br />{" "}
+                            from the database.
                           </p>
                         </AlertDialogDescription>
                       </AlertDialogHeader>

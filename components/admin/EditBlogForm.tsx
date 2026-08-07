@@ -39,39 +39,39 @@ export default function EditBlogForm({ initialData }: { initialData: any }) {
   });
 
   const handleFileUpload = async (
-  e: React.ChangeEvent<HTMLInputElement>,
-  field: "image" | "userImage",
-) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "image" | "userImage",
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const localPreviewUrl = URL.createObjectURL(file);
-  const previousPreview = formData[field];
-
-  setFormData((prev) => ({
-    ...prev,
-    [field]: localPreviewUrl,
-  }));
-
-  try {
-    const { fileKey } = await upload(
-      file,
-      field === "image" ? "blog" : "users",
-    );
+    const localPreviewUrl = URL.createObjectURL(file);
+    const previousPreview = formData[field];
 
     setFormData((prev) => ({
       ...prev,
-      ...(field === "image" ? { imageKey: fileKey } : {}),
+      [field]: localPreviewUrl,
     }));
-  } catch (error) {
-    URL.revokeObjectURL(localPreviewUrl);
-    setFormData((prev) => ({
-      ...prev,
-      [field]: previousPreview,
-    }));
-    console.error("Upload failed", error);
-  }
-};
+
+    try {
+      const { fileKey } = await upload(
+        file,
+        field === "image" ? "blog" : "users",
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        ...(field === "image" ? { imageKey: fileKey } : {}),
+      }));
+    } catch (error) {
+      URL.revokeObjectURL(localPreviewUrl);
+      setFormData((prev) => ({
+        ...prev,
+        [field]: previousPreview,
+      }));
+      console.error("Upload failed", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,9 +168,9 @@ export default function EditBlogForm({ initialData }: { initialData: any }) {
                 <Image
                   src={formData.image}
                   alt="Preview"
-                  fill
+                  height={700}
+                  width={700}
                   className="object-cover"
-                  unoptimized
                 />
               </div>
             )}
@@ -226,9 +226,9 @@ export default function EditBlogForm({ initialData }: { initialData: any }) {
                   <Image
                     src={formData.userImage}
                     alt="Author"
-                    fill
+                    height={700}
+                    width={700}
                     className="object-cover"
-                    unoptimized
                   />
                 </div>
               )}

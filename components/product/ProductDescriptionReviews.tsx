@@ -17,8 +17,9 @@ const Stars = ({
     {Array.from({ length: 5 }).map((_, index) => (
       <Star
         key={index}
-        className={`${className} ${index < Math.round(rating) ? "fill-current" : ""
-          }`}
+        className={`${className} ${
+          index < Math.round(rating) ? "fill-current" : ""
+        }`}
         strokeWidth={1.2}
       />
     ))}
@@ -40,7 +41,6 @@ function formatDate(value: string) {
 const ProductDescriptionReviews = ({
   product,
 }: ProductDescriptionReviewsProps) => {
-
   const specs = product.attributes.filter((item) => item.name && item.value);
   const averageRating = Number(product.reviewSummary.averageRating.toFixed(1));
   const reviewCount = product.reviewSummary.reviewCount;
@@ -65,9 +65,11 @@ const ProductDescriptionReviews = ({
               Description
             </h2>
 
-
             {sections.map((section, index) => (
-              <p key={index} className="mt-4 max-w-3xl text-xs leading-6 text-gray-600 whitespace-pre-wrap font-sans">
+              <p
+                key={index}
+                className="mt-4 max-w-3xl text-xs leading-6 text-gray-600 whitespace-pre-wrap font-sans"
+              >
                 {section}
               </p>
             ))}
@@ -174,9 +176,9 @@ const ProductDescriptionReviews = ({
                               <Image
                                 src={mediaItem.url}
                                 alt="Customer review media"
-                                fill
+                                height={700}
+                                width={700}
                                 className="object-cover"
-                                unoptimized
                               />
                             )}
                           </div>

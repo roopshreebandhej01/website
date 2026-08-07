@@ -1,16 +1,16 @@
-import Image from "next/image"
+import Image from "next/image";
 
-import { CheckoutFlow } from "@/components/checkout/CheckoutFlow"
-import type { AddressView } from "@/services/address.service"
+import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
+import type { AddressView } from "@/services/address.service";
 
 export function CheckoutPage({
   addresses,
   isGuest,
   secondPhone = "",
 }: {
-  addresses: AddressView[]
-  isGuest: boolean
-  secondPhone?: string
+  addresses: AddressView[];
+  isGuest: boolean;
+  secondPhone?: string;
 }) {
   return (
     <main className="min-h-screen overflow-x-hidden pt-16">
@@ -18,7 +18,8 @@ export function CheckoutPage({
         <Image
           src="/404.png"
           alt=""
-          fill
+          height={700}
+          width={700}
           priority
           sizes="100vw"
           className="-z-10 object-cover object-top"
@@ -33,5 +34,5 @@ export function CheckoutPage({
         </div>
       </section>
     </main>
-  )
+  );
 }

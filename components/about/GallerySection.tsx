@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Image from "next/image"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { Navigation, Autoplay } from "swiper/modules"
+import * as React from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Autoplay } from "swiper/modules";
 
-import "swiper/css"
-import "swiper/css/navigation"
+import "swiper/css";
+import "swiper/css/navigation";
 
-import { galleryItems } from "./about-data"
+import { galleryItems } from "./about-data";
 
 const GallerySection = () => {
-  const extendedGalleryItems = [...galleryItems, ...galleryItems]
-  const [isMobile, setIsMobile] = React.useState(false)
+  const extendedGalleryItems = [...galleryItems, ...galleryItems];
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640)
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
     <section className="bg-[#faf8f5] py-12 text-[#17110d] sm:py-16 lg:py-20 overflow-hidden">
@@ -29,7 +29,9 @@ const GallerySection = () => {
           Gallery
         </h2>
         <p className="mx-auto mt-4 max-w-[50rem] text-xs font-medium leading-relaxed text-[#17110d]/80 sm:text-sm md:text-base">
-          Step into our gallery of timeless Bandhej artistry, showcasing handcrafted sarees and dupattas that beautifully blend traditional craftsmanship with modern elegance and refined luxury.
+          Step into our gallery of timeless Bandhej artistry, showcasing
+          handcrafted sarees and dupattas that beautifully blend traditional
+          craftsmanship with modern elegance and refined luxury.
         </p>
 
         <div className="mt-12 px-2 sm:px-6 md:px-10 relative">
@@ -83,14 +85,14 @@ const GallerySection = () => {
                   <Image
                     src={item.src}
                     alt={item.alt}
-                    fill
-                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    height={700}
+                    width={700}
                     className={`object-cover transition-transform duration-700 ease-out md:group-hover/card:scale-105 ${item.className}`}
                   />
                 </div>
               </SwiperSlide>
             ))}
-            
+
             {/* Custom Navigation Buttons */}
             <button className="swiper-button-prev-custom hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 opacity-100 pointer-events-auto transition-all duration-300 border-[#c39150] text-[#3f2617] bg-[#faf8f5]/90 hover:bg-[#c39150] hover:text-white hover:border-[#c39150] focus-visible:ring-0 focus-visible:outline-none focus:outline-none active:scale-95 size-10 rounded-full items-center justify-center cursor-pointer">
               <ChevronLeft className="size-5" />
@@ -102,7 +104,7 @@ const GallerySection = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default GallerySection
+export default GallerySection;

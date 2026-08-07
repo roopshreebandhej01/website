@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
   visible: { opacity: 1, y: 0 },
-}
+};
 
 const HeroSection = () => {
   return (
@@ -26,10 +26,11 @@ const HeroSection = () => {
         <Image
           src="/new_banners/image 276.png"
           alt="Roop Shree Bandhej contact hero"
-          fill
+          height={700}
+          width={700}
           priority
           sizes="100vw"
-          className="object-cover object-center"
+          className="object-cover w-full h-full absolute inset-0 object-center"
         />
       </div>
       <div className="absolute inset-0 z-[1] bg-white/15 md:hidden" />
@@ -54,7 +55,8 @@ const HeroSection = () => {
             transition={{ duration: 0.65, ease: "easeOut" }}
             className="-ml-[0.04em] text-[2.65rem] leading-[0.92] text-[#3F2617] sm:text-5xl md:text-6xl lg:text-7xl"
           >
-            Where Heritage Meets <span className="text-[#C18F50] italic ">Elegance</span>
+            Where Heritage Meets{" "}
+            <span className="text-[#C18F50] italic ">Elegance</span>
           </motion.h1>
 
           <motion.div
@@ -63,9 +65,9 @@ const HeroSection = () => {
             className="mt-4 space-y-3 text-[0.68rem] leading-[1.45] text-[#5f6166] md:mt-6 md:max-w-xl md:space-y-6 md:text-base md:leading-6"
           >
             <p>
-              We&apos;d love to hear from you and assist with anything you
-              need. Whether you have questions about our collections, custom
-              orders, collaborations, shipping, or support.
+              We&apos;d love to hear from you and assist with anything you need.
+              Whether you have questions about our collections, custom orders,
+              collaborations, shipping, or support.
             </p>
             <p>
               Our team is always here to help you with a smooth and delightful
@@ -88,7 +90,7 @@ const HeroSection = () => {
         </motion.div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default HeroSection
+export default HeroSection;

@@ -1,6 +1,6 @@
-import Image from "next/image"
+import Image from "next/image";
 
-import { missionCards } from "./about-data"
+import { missionCards } from "./about-data";
 
 const MissionSection = () => {
   return (
@@ -8,14 +8,15 @@ const MissionSection = () => {
       <Image
         src="/about/missionbg.png"
         alt=""
-        fill
+        height={700}
+        width={700}
         sizes="100vw"
-        className="object-cover object-center"
+        className="object-cover w-full h-full absolute inset-0 object-center"
       />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         <div className="text-center">
-        <h2 className="font-heading text-3xl leading-tight sm:text-4xl lg:text-5xl text-[#17110d]">
+          <h2 className="font-heading text-3xl leading-tight sm:text-4xl lg:text-5xl text-[#17110d]">
             Mission and craft philosophy
           </h2>
           <p className="mx-auto mt-2 max-w-[34rem] text-[0.62rem] font-medium leading-4 sm:text-lg">
@@ -25,7 +26,7 @@ const MissionSection = () => {
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3">
           {missionCards.map((card) => {
-            const Icon = card.icon
+            const Icon = card.icon;
 
             return (
               <article
@@ -40,12 +41,12 @@ const MissionSection = () => {
                   {card.text}
                 </p>
               </article>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default MissionSection
+export default MissionSection;

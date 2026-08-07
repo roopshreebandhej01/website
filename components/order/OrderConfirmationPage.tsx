@@ -53,7 +53,8 @@ export function OrderConfirmationPage({
     <main className="relative pt-20 isolate min-h-screen overflow-hidden bg-[#fff6ea] text-[#3F2617]">
       <Image
         sizes="100vw"
-        fill
+        height={700}
+        width={700}
         src="/orderconfirm-bg.png"
         alt=""
         priority
@@ -165,7 +166,8 @@ export function OrderConfirmationPage({
                   <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-[#f3dfc7]">
                     <Image
                       sizes="48px"
-                      fill
+                      height={700}
+                      width={700}
                       src={item.image}
                       alt={item.product}
                       className="object-cover object-top"

@@ -23,7 +23,8 @@ const HeroSection = () => {
         <Image
           src="/new_banners/bandhej_saree_mobile.png"
           alt="Bandhej saree collection"
-          fill
+          height={700}
+          width={700}
           priority
           sizes="100vw"
           className="object-cover object-center"
@@ -62,7 +63,9 @@ const HeroSection = () => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="mt-4 max-w-[16rem] text-[0.68rem] leading-[1.45] text-[#3F2617]/75 md:mt-6 md:max-w-md md:text-base md:leading-6 md:text-[#535456]"
           >
-            Explore our carefully curated collection of handcrafted sarees, suits, lehengas, and ethnic essentials—where tradition meets contemporary elegance.
+            Explore our carefully curated collection of handcrafted sarees,
+            suits, lehengas, and ethnic essentials—where tradition meets
+            contemporary elegance.
           </motion.p>
         </motion.div>
       </div>

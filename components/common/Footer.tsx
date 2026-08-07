@@ -50,17 +50,19 @@ const Footer = async () => {
     <footer className=" print:hidden relative overflow-hidden bg-[#F1E1CD] text-[#3F2617] md:bg-[#C39150]/15">
       <Image
         sizes="100vw"
-        fill
+        height={700}
+        width={700}
         src="/footer-bg.png"
         alt=""
-        className="hidden object-cover opacity-80 md:block"
+        className="hidden absolute inset-0 w-full h-full object-cover opacity-80 md:block"
       />
       <div className="relative mx-auto grid max-w-7xl gap-9 px-5 py-12 sm:px-6 md:grid-cols-[1.25fr_1fr_1fr_1fr_1.4fr] lg:px-8">
         <div>
           <Link href="/" className="relative mb-5 block h-20 w-32">
             <Image
               sizes="128px"
-              fill
+              height={700}
+              width={700}
               src="/header-logo.png"
               alt="Roop Shree"
               className="object-contain object-left"

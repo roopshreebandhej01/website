@@ -36,7 +36,13 @@ export default function ImageUpload({
         className="relative flex h-48 w-full items-center justify-center overflow-hidden rounded-md border border-dashed border-input bg-muted/30 text-sm text-muted-foreground"
       >
         {preview ? (
-          <Image src={preview} alt="Uploaded preview" fill className="object-contain" unoptimized />
+          <Image
+            src={preview}
+            alt="Uploaded preview"
+            height={700}
+            width={700}
+            className="object-contain"
+          />
         ) : (
           "Click to upload image"
         )}
@@ -54,7 +60,11 @@ export default function ImageUpload({
         onChange={(event) => handleFile(event.target.files?.[0])}
       />
       {preview ? (
-        <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => inputRef.current?.click()}
+        >
           Change image
         </Button>
       ) : null}

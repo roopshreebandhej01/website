@@ -1,19 +1,19 @@
-import Image from "next/image"
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
 
 export type HomeCategory = {
-  id?: string
-  name: string
-  href: string
-  image: string
-}
+  id?: string;
+  name: string;
+  href: string;
+  image: string;
+};
 
 const CategorySection = ({
   categories: fetchedCategories,
 }: {
-  categories?: HomeCategory[]
+  categories?: HomeCategory[];
 }) => {
-  const categoryItems = fetchedCategories ?? []
+  const categoryItems = fetchedCategories ?? [];
 
   return (
     <section className="bg-white py-7 md:pb-20">
@@ -41,8 +41,8 @@ const CategorySection = ({
                   <Image
                     src={category.image}
                     alt={category.name}
-                    fill
-                    sizes="(width: 1024px) 20vw, (width: 640px) 33vw, 50vw"
+                    height={700}
+                    width={700}
                     className="object-fill transition duration-300 group-hover:scale-[1.02]"
                   />
                 ) : (
@@ -56,7 +56,7 @@ const CategorySection = ({
         ) : null}
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default CategorySection
+export default CategorySection;

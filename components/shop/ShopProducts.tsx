@@ -112,7 +112,6 @@ export default function ShopProducts({
                   width={400}
                   alt={category.name}
                   className="mx-auto h-36 w-full object-contain transition duration-300 group-hover:scale-[1.02] sm:h-40 lg:h-44 xl:h-48"
-                  unoptimized
                 />
               ) : (
                 <span className="flex h-36 items-center justify-center bg-[#f8efe6] px-3 text-center text-sm text-[#3f2617] sm:h-40 lg:h-44 xl:h-48">
@@ -288,8 +287,8 @@ function ProductCard({ product }: { product: Product }) {
             <Image
               src={product.image}
               alt={product.name}
-              fill
-              sizes="(min-width: 1280px) 220px, (min-width: 768px) 28vw, 48vw"
+              height={700}
+              width={700}
               className={`object-cover transition duration-500 group-hover:scale-[1.04] ${product.imageClass ?? ""}`}
             />
           ) : (

@@ -155,7 +155,8 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
                 <Image
                   src="/header-logo.png"
                   alt="Roop Shree"
-                  fill
+                  height={700}
+                  width={700}
                   sizes="96px"
                   className="object-contain"
                 />
@@ -285,10 +286,10 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
             <Image
               src="/header-logo.png"
               alt="Roop Shree"
-              fill
+              height={700}
+              width={700}
               priority
-              sizes="108px"
-              className="object-contain"
+              className=" w-20 h-auto object-contain"
             />
           </Link>
 
@@ -473,7 +474,8 @@ function SearchResultsPanel({
                       <Image
                         src={product.image}
                         alt={product.name}
-                        fill
+                        height={200}
+                        width={200}
                         sizes="44px"
                         className="object-contain object-top"
                       />

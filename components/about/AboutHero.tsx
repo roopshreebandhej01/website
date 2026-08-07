@@ -1,38 +1,25 @@
-import Image from "next/image"
+import Image from "next/image";
 
 const AboutHero = () => {
   return (
     <section className="relative isolate mt-16 overflow-hidden bg-[#f4e6d8] md:mt-0 md:min-h-svh">
       <Image
-
         sizes="100vw"
-
         fill
-
         src="/new_banners/image 277.png"
-
         alt="Roopshree Bandhej about hero"
-
         priority
-
         className="hidden object-cover object-center md:block"
-
       />
       <div className="relative aspect-[903/1600] overflow-hidden md:hidden">
         <Image
-
           sizes="100vw"
-
-          fill
-
+          height={700}
+          width={700}
           src="/new_banners/about_us_mobile.png"
-
           alt="Roopshree Bandhej about hero"
-
           priority
-
           className="object-cover object-center"
-
         />
       </div>
       <div className="absolute inset-0 z-[1] bg-white/15 md:hidden" />
@@ -63,7 +50,7 @@ const AboutHero = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default AboutHero
+export default AboutHero;

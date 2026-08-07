@@ -48,7 +48,8 @@ export function BlogDetailPage({
                 <Image
                   src={post.image}
                   alt={post.title}
-                  fill
+                  height={700}
+                  width={700}
                   priority
                   sizes="(min-width: 1024px) 760px, 100vw"
                   className="object-cover object-top"
@@ -168,7 +169,8 @@ function RelatedArticles({ posts }: { posts: BlogView[] }) {
                 <Image
                   src={post.image}
                   alt={post.title}
-                  fill
+                  height={700}
+                  width={700}
                   sizes="64px"
                   className="object-cover object-top"
                 />

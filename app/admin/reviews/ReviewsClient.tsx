@@ -110,7 +110,9 @@ export default function ReviewsClient({
               {tab.label}
               <span
                 className={`rounded-full px-2 py-0.5 text-xs ${
-                  active ? "bg-[#D4A056] text-white" : "bg-gray-100 text-gray-500"
+                  active
+                    ? "bg-[#D4A056] text-white"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {count}
@@ -145,7 +147,10 @@ export default function ReviewsClient({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="h-24 px-4 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="h-24 px-4 text-center text-gray-500"
+                  >
                     No reviews found.
                   </td>
                 </tr>
@@ -251,9 +256,9 @@ function ReviewRow({
                     <Image
                       src={item.url}
                       alt={`Review media ${index + 1}`}
-                      fill
+                      height={700}
+                      width={700}
                       className="object-contain"
-                      unoptimized
                     />
                   )}
                 </div>

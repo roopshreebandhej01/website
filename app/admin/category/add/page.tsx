@@ -74,7 +74,9 @@ export default function AddCategoryForm() {
     } catch (error) {
       URL.revokeObjectURL(localPreviewUrl);
       setBannerPreview("");
-      toast.error(error instanceof Error ? error.message : "Image upload failed");
+      toast.error(
+        error instanceof Error ? error.message : "Image upload failed",
+      );
     }
   }
 
@@ -93,7 +95,11 @@ export default function AddCategoryForm() {
           <form onSubmit={submit} className="grid gap-8 md:grid-cols-2">
             <div className="space-y-6">
               <Field label="Category Name">
-                <Input value={name} onChange={(event) => setName(event.target.value)} required />
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  required
+                />
               </Field>
 
               <Field label="Parent Category">
@@ -128,7 +134,13 @@ export default function AddCategoryForm() {
                   className="relative flex h-48 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed text-sm text-muted-foreground"
                 >
                   {bannerPreview ? (
-                    <Image src={bannerPreview} alt="Category preview" fill className="object-contain" unoptimized />
+                    <Image
+                      src={bannerPreview}
+                      alt="Category preview"
+                      height={700}
+                      width={700}
+                      className="object-contain"
+                    />
                   ) : uploading ? (
                     "Uploading..."
                   ) : (

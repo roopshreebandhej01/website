@@ -17,25 +17,18 @@ const Newarrival = ({
     <section className="bg-white">
       <div className="relative isolate overflow-hidden bg-[#f8ead7] md:aspect-[2/1]">
         <Image
-
           sizes="100vw"
-
-          fill
-
+          height={700}
+          width={700}
           src="/new_banners/image 280.png"
-
           alt="Woman styling a red Bandhej dupatta"
-
-          priority={false}
-
-          className="hidden object-cover object-center md:block"
-
+          className="hidden w-full h-auto object-cover object-center md:block"
         />
         <Image
           src="/new_banners/bandhej_mobile.png"
           alt="Woman styling a red Bandhej dupatta"
-          width={852}
-          height={1846}
+          width={1200}
+          height={1200}
           className="block h-auto w-full md:hidden"
         />
 

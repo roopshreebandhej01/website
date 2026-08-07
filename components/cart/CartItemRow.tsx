@@ -1,21 +1,21 @@
-import Image from "next/image"
-import { Minus, Plus, Trash2 } from "lucide-react"
+import Image from "next/image";
+import { Minus, Plus, Trash2 } from "lucide-react";
 
-import { formatPrice } from "@/components/global/const"
-import { useAddToCart } from "@/hooks/useAddToCart"
-import { useWishlist } from "@/hooks/useWishlist"
-import type { CartItem } from "@/store/cartTypes"
-import { useRouter } from "next/navigation"
+import { formatPrice } from "@/components/global/const";
+import { useAddToCart } from "@/hooks/useAddToCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import type { CartItem } from "@/store/cartTypes";
+import { useRouter } from "next/navigation";
 
 export function CartItemRow({ item }: { item: CartItem }) {
   const {
     handleDecreaseCartItem,
     handleIncreaseCartItem,
     handleRemoveCartItem,
-  } = useAddToCart()
-  const { handleToggleWishlist } = useWishlist()
-  const router = useRouter()
-  const total = item.price * item.quantity
+  } = useAddToCart();
+  const { handleToggleWishlist } = useWishlist();
+  const router = useRouter();
+  const total = item.price * item.quantity;
   const wishlistItem = {
     productId: item.productId,
     dbProductId: item.dbProductId,
@@ -26,7 +26,7 @@ export function CartItemRow({ item }: { item: CartItem }) {
     colour: item.colour,
     imageClass: item.imageClass,
     attributes: item.attributes,
-  }
+  };
 
   return (
     <article className="grid gap-4 border-b border-[#3F2617]/55 py-4 md:grid-cols-[minmax(0,1fr)_110px_110px_110px_56px] md:items-start">
@@ -36,7 +36,8 @@ export function CartItemRow({ item }: { item: CartItem }) {
             <Image
               src={item.image}
               alt={item.title}
-              fill
+              height={700}
+              width={700}
               sizes="62px"
               className="object-contain object-top"
             />
@@ -96,16 +97,16 @@ export function CartItemRow({ item }: { item: CartItem }) {
       <button
         type="button"
         onClick={() => {
-          handleToggleWishlist(wishlistItem)
-          handleRemoveCartItem(item)
-          router.push("/dashboard/wishlist")
+          handleToggleWishlist(wishlistItem);
+          handleRemoveCartItem(item);
+          router.push("/dashboard/wishlist");
         }}
         className="text-left text-[11px] font-medium text-[#C39150] transition hover:text-[#3F2617] md:col-start-4 md:col-end-6 md:justify-self-end md:whitespace-nowrap md:text-right"
       >
         Move to wishlist
       </button>
     </article>
-  )
+  );
 }
 
 function CartValue({ label, value }: { label: string; value: string }) {
@@ -116,5 +117,5 @@ function CartValue({ label, value }: { label: string; value: string }) {
       </span>
       <span className="font-medium text-[#C39150]">{value}</span>
     </div>
-  )
+  );
 }

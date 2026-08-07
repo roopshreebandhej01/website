@@ -180,9 +180,9 @@ export default function EditCategory({ categoryInfo }: any) {
                       <Image
                         src={preview}
                         alt="Category preview"
-                        fill
+                        height={700}
+                        width={700}
                         className="object-contain"
-                        unoptimized
                       />
                     )}
 
@@ -200,7 +200,6 @@ export default function EditCategory({ categoryInfo }: any) {
                     accept="image/*"
                     onChange={(e) => handleBanner(e.target.files?.[0])}
                   />
-
                 </div>
               </div>
             </div>

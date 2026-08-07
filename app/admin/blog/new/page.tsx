@@ -15,7 +15,9 @@ import { useFileUpload } from "@/helper/upload/client";
 
 export default function BlogForm() {
   const router = useRouter();
-  const [dbCategories, setDbCategories] = useState<{ id: string; name: string }[]>([]);
+  const [dbCategories, setDbCategories] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   useEffect(() => {
     getBlogCategories().then((res) => {
@@ -34,7 +36,7 @@ export default function BlogForm() {
     imageKey: "",
     userImage: "",
     userName: "",
-    textArea:"",
+    textArea: "",
     tags: "",
   });
 
@@ -118,23 +120,22 @@ export default function BlogForm() {
             </div>
             <div className="space-y-2">
               <Label className="font-medium">Category</Label>
-            
-                <select
-                  value={formData.blogCategory}
-                  onChange={(e) =>
-                    setFormData({ ...formData, blogCategory: e.target.value })
-                  }
-                  required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">Select category</option>
-                  {dbCategories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
 
+              <select
+                value={formData.blogCategory}
+                onChange={(e) =>
+                  setFormData({ ...formData, blogCategory: e.target.value })
+                }
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Select category</option>
+                {dbCategories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -185,7 +186,8 @@ export default function BlogForm() {
                 <Image
                   src={formData.image}
                   alt="Blog banner preview"
-                  fill
+                  height={700}
+                  width={700}
                   className="object-cover"
                   unoptimized
                 />
@@ -208,10 +210,10 @@ export default function BlogForm() {
               <Label className="font-medium">Author Photo</Label>
               <div className="relative border border-slate-200 rounded-md p-2 bg-white text-center flex items-center justify-center gap-2">
                 <input
-                type="file"
-                accept="image/*"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => handleFileUpload(e, "userImage")}
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={(e) => handleFileUpload(e, "userImage")}
                 />
                 <User size={16} className="text-slate-400" />
                 <span className="text-sm text-slate-600">
@@ -223,19 +225,18 @@ export default function BlogForm() {
                   <Image
                     src={formData.userImage}
                     alt="Author preview"
-                    fill
+                    height={700}
+                    width={700}
                     className="object-cover"
                     unoptimized
                   />
                 </div>
               ) : null}
-              
             </div>
-           
           </div>
-           <div className="space-y-2 w-full">
-              <Label className="font-medium w-full">Author Description</Label>
-             <Textarea
+          <div className="space-y-2 w-full">
+            <Label className="font-medium w-full">Author Description</Label>
+            <Textarea
               placeholder="Write a brief summary for author"
               value={formData.textArea}
               onChange={(e) =>
@@ -243,7 +244,7 @@ export default function BlogForm() {
               }
               required
             />
-            </div>
+          </div>
 
           <div className="space-y-2">
             <Label className="font-medium">

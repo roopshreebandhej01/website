@@ -45,9 +45,9 @@ const StayConnected = () => {
         <Image
           src="/home/connected_bg.png"
           alt=""
-          fill
-          sizes="100vw"
-          className="scale-[1.3] object-cover object-[22%_center] sm:object-center"
+          height={700}
+          width={700}
+          className=" object-cover w-full h-auto absolute inset-0"
         />
 
         <div className="relative mx-auto max-w-7xl px-5 text-center sm:px-6 lg:px-8">
@@ -108,9 +108,10 @@ const StayConnected = () => {
         <Image
           src="/home/connected_bg.png"
           alt=""
-          fill
+          height={700}
+          width={700}
           sizes="100vw"
-          className="scale-[1.3] object-cover object-[22%_center] sm:object-center opacity-10 mix-blend-overlay"
+          className=" object-cover w-full h-auto absolute inset-0 opacity-10 mix-blend-overlay"
         />
 
         <div className="relative mx-auto max-w-7xl px-5 text-center sm:px-6 lg:px-8">

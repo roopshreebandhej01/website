@@ -139,9 +139,13 @@ export default function ProductForm({ product }: ProductFormProps) {
   const [strikeThroughPrice, setStrikeThroughPrice] = useState(
     rupees(product?.strikeThroughPrice),
   );
-  const [status, setStatus] = useState<ProductStatus>(product?.status ?? "draft");
+  const [status, setStatus] = useState<ProductStatus>(
+    product?.status ?? "draft",
+  );
   const [isFeatured, setIsFeatured] = useState(Boolean(product?.isFeatured));
-  const [isNewArrival, setIsNewArrival] = useState(Boolean(product?.isNewArrival));
+  const [isNewArrival, setIsNewArrival] = useState(
+    Boolean(product?.isNewArrival),
+  );
   const [isTrending, setIsTrending] = useState(Boolean(product?.isTrending));
   const [categoryIds, setCategoryIds] = useState(initialCategories);
   const [attributes, setAttributes] = useState<AttributeRow[]>(
@@ -169,7 +173,10 @@ export default function ProductForm({ product }: ProductFormProps) {
 
       if (!mediaItem.key) return;
 
-      grouped.set(item.variantId, [...(grouped.get(item.variantId) ?? []), mediaItem]);
+      grouped.set(item.variantId, [
+        ...(grouped.get(item.variantId) ?? []),
+        mediaItem,
+      ]);
     });
 
     return grouped;
@@ -177,34 +184,35 @@ export default function ProductForm({ product }: ProductFormProps) {
   const [variants, setVariants] = useState<VariantRow[]>(
     product?.productVariantRes?.length
       ? product.productVariantRes.map((variant) => ({
-        id: variant.id,
-        sku: variant.sku,
-        instagramLink: variant.instagramLink ?? "",
-        title: variant.title,
-        price: rupees(variant.price),
-        strikeThroughPrice: rupees(variant.strikeThroughPrice),
-        stockQuantity: String(variant.stockQuantity),
-        size: variant.size ?? "",
-        color: variant.color ?? "",
-        fabric: variant.fabric ?? "",
-        banner: (() => {
-          const variantMedia = mediaByVariant.get(variant.id) ?? [];
-          const bannerKey = variant.bannerImage ?? variantMedia[0]?.key ?? "";
+          id: variant.id,
+          sku: variant.sku,
+          instagramLink: variant.instagramLink ?? "",
+          title: variant.title,
+          price: rupees(variant.price),
+          strikeThroughPrice: rupees(variant.strikeThroughPrice),
+          stockQuantity: String(variant.stockQuantity),
+          size: variant.size ?? "",
+          color: variant.color ?? "",
+          fabric: variant.fabric ?? "",
+          banner: (() => {
+            const variantMedia = mediaByVariant.get(variant.id) ?? [];
+            const bannerKey = variant.bannerImage ?? variantMedia[0]?.key ?? "";
 
-          if (!bannerKey) return null;
+            if (!bannerKey) return null;
 
-          return {
-            key: bannerKey,
-            previewUrl:
-              variantMedia.find((item) => item.key === bannerKey)?.previewUrl ??
-              variantMedia[0]?.previewUrl ??
-              bannerKey,
-          };
-        })(),
-        gallery: (mediaByVariant.get(variant.id) ?? []).slice(1),
-        isDefault: variant.isDefault,
-        isActive: variant.isActive,
-      }))
+            return {
+              key: bannerKey,
+              previewUrl:
+                variantMedia.find((item) => item.key === bannerKey)
+                  ?.previewUrl ??
+                variantMedia[0]?.previewUrl ??
+                bannerKey,
+            };
+          })(),
+          gallery: (mediaByVariant.get(variant.id) ?? []).slice(1),
+          isDefault: variant.isDefault,
+          isActive: variant.isActive,
+        }))
       : [{ ...emptyVariant, isDefault: true }],
   );
 
@@ -214,13 +222,19 @@ export default function ProductForm({ product }: ProductFormProps) {
     index: number,
     patch: Partial<T>,
   ) {
-    setRows(rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+    setRows(
+      rows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
+    );
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const validVariants = variants.filter((variant) => variant.sku && variant.title);
+    const validVariants = variants.filter(
+      (variant) => variant.sku && variant.title,
+    );
 
     if (validVariants.length === 0) {
       toast.error("At least one variant must have a SKU and Title filled in.");
@@ -293,12 +307,21 @@ export default function ProductForm({ product }: ProductFormProps) {
 
           return target === "banner"
             ? { ...variant, banner: uploadedMediaItems[0] }
-            : { ...variant, gallery: [...variant.gallery, ...uploadedMediaItems] };
+            : {
+                ...variant,
+                gallery: [...variant.gallery, ...uploadedMediaItems],
+              };
         }),
       );
-      toast.success(target === "banner" ? "Banner uploaded" : `${uploadedMediaItems.length} images uploaded to gallery`);
+      toast.success(
+        target === "banner"
+          ? "Banner uploaded"
+          : `${uploadedMediaItems.length} images uploaded to gallery`,
+      );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Media upload failed");
+      toast.error(
+        error instanceof Error ? error.message : "Media upload failed",
+      );
     }
   }
 
@@ -314,7 +337,11 @@ export default function ProductForm({ product }: ProductFormProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push("/admin/products")}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/admin/products")}
+          >
             Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
@@ -325,14 +352,18 @@ export default function ProductForm({ product }: ProductFormProps) {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="grid gap-6">
-
-
           <DynamicRows
             title="Variants"
             onAdd={() => {
               const first = variants[0];
               const replicated: VariantRow =
-                first && (first.sku || first.title || first.price || first.size || first.color || first.fabric)
+                first &&
+                (first.sku ||
+                  first.title ||
+                  first.price ||
+                  first.size ||
+                  first.color ||
+                  first.fabric)
                   ? {
                       ...emptyVariant,
                       // Copy common fields from the first variant
@@ -356,22 +387,37 @@ export default function ProductForm({ product }: ProductFormProps) {
             }}
           >
             {variants.map((variant, index) => (
-              <div key={index} className="grid gap-3 border-b pb-4 last:border-b-0 md:grid-cols-3">
+              <div
+                key={index}
+                className="grid gap-3 border-b pb-4 last:border-b-0 md:grid-cols-3"
+              >
                 <Input
                   placeholder="Variant SKU"
                   value={variant.sku}
-                  onChange={(event) => updateRow(variants, setVariants, index, { sku: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      sku: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   placeholder="Title"
                   value={variant.title}
-                  onChange={(event) => updateRow(variants, setVariants, index, { title: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      title: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   type="url"
                   placeholder="Instagram link"
                   value={variant.instagramLink}
-                  onChange={(event) => updateRow(variants, setVariants, index, { instagramLink: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      instagramLink: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   type="number"
@@ -379,7 +425,11 @@ export default function ProductForm({ product }: ProductFormProps) {
                   step="0.01"
                   placeholder="Price"
                   value={variant.price}
-                  onChange={(event) => updateRow(variants, setVariants, index, { price: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      price: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   type="number"
@@ -388,7 +438,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                   placeholder="Strike-through price"
                   value={variant.strikeThroughPrice}
                   onChange={(event) =>
-                    updateRow(variants, setVariants, index, { strikeThroughPrice: event.target.value })
+                    updateRow(variants, setVariants, index, {
+                      strikeThroughPrice: event.target.value,
+                    })
                   }
                 />
                 <Input
@@ -397,23 +449,37 @@ export default function ProductForm({ product }: ProductFormProps) {
                   placeholder="Stock"
                   value={variant.stockQuantity}
                   onChange={(event) =>
-                    updateRow(variants, setVariants, index, { stockQuantity: event.target.value })
+                    updateRow(variants, setVariants, index, {
+                      stockQuantity: event.target.value,
+                    })
                   }
                 />
                 <Input
                   placeholder="Size"
                   value={variant.size}
-                  onChange={(event) => updateRow(variants, setVariants, index, { size: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      size: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   placeholder="Color"
                   value={variant.color}
-                  onChange={(event) => updateRow(variants, setVariants, index, { color: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      color: event.target.value,
+                    })
+                  }
                 />
                 <Input
                   placeholder="Fabric"
                   value={variant.fabric}
-                  onChange={(event) => updateRow(variants, setVariants, index, { fabric: event.target.value })}
+                  onChange={(event) =>
+                    updateRow(variants, setVariants, index, {
+                      fabric: event.target.value,
+                    })
+                  }
                 />
                 <div className="grid gap-3 md:col-span-3">
                   <div className="grid gap-3 md:grid-cols-[6rem_1fr_auto] md:items-center">
@@ -422,9 +488,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                         <Image
                           src={variant.banner.previewUrl}
                           alt="Variant banner preview"
-                          fill
+                          height={700}
+                          width={700}
                           className="object-cover"
-                          unoptimized
                         />
                       ) : null}
                     </div>
@@ -439,7 +505,11 @@ export default function ProductForm({ product }: ProductFormProps) {
                         hidden
                         accept="image/*"
                         onChange={(event) =>
-                          handleVariantMediaUpload(index, "banner", event.target.files)
+                          handleVariantMediaUpload(
+                            index,
+                            "banner",
+                            event.target.files,
+                          )
                         }
                       />
                     </label>
@@ -457,20 +527,27 @@ export default function ProductForm({ product }: ProductFormProps) {
                           multiple
                           accept="image/*"
                           onChange={(event) =>
-                            handleVariantMediaUpload(index, "gallery", event.target.files)
+                            handleVariantMediaUpload(
+                              index,
+                              "gallery",
+                              event.target.files,
+                            )
                           }
                         />
                       </label>
                     </div>
                     {variant.gallery.map((item, mediaIndex) => (
-                      <div key={`${item.key}-${mediaIndex}`} className="flex items-center gap-3">
+                      <div
+                        key={`${item.key}-${mediaIndex}`}
+                        className="flex items-center gap-3"
+                      >
                         <div className="relative size-16 overflow-hidden rounded-md border bg-muted">
                           <Image
                             src={item.previewUrl}
                             alt="Variant gallery preview"
-                            fill
+                            height={700}
+                            width={700}
                             className="object-cover"
-                            unoptimized
                           />
                         </div>
                         <span className="min-w-0 flex-1 truncate rounded-md border border-input px-3 py-2 text-sm text-muted-foreground">
@@ -506,7 +583,8 @@ export default function ProductForm({ product }: ProductFormProps) {
                         setVariants(
                           variants.map((row, rowIndex) => ({
                             ...row,
-                            isDefault: rowIndex === index ? event.target.checked : false,
+                            isDefault:
+                              rowIndex === index ? event.target.checked : false,
                           })),
                         )
                       }
@@ -518,7 +596,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                       type="checkbox"
                       checked={variant.isActive}
                       onChange={(event) =>
-                        updateRow(variants, setVariants, index, { isActive: event.target.checked })
+                        updateRow(variants, setVariants, index, {
+                          isActive: event.target.checked,
+                        })
                       }
                     />
                     Active
@@ -535,16 +615,17 @@ export default function ProductForm({ product }: ProductFormProps) {
                 </div>
               </div>
             ))}
-
           </DynamicRows>
 
           <Card>
-            <CardHeader>
-              {/* <CardTitle>Product</CardTitle> */}
-            </CardHeader>
+            <CardHeader>{/* <CardTitle>Product</CardTitle> */}</CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <Field label="Name">
-                <Input value={name} onChange={(event) => setName(event.target.value)} required />
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  required
+                />
               </Field>
               <Field label="Slug">
                 <Input
@@ -615,7 +696,9 @@ export default function ProductForm({ product }: ProductFormProps) {
             <CardContent className="grid gap-4">
               <select
                 value={status}
-                onChange={(event) => setStatus(event.target.value as ProductStatus)}
+                onChange={(event) =>
+                  setStatus(event.target.value as ProductStatus)
+                }
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="draft">Draft</option>
@@ -720,24 +803,44 @@ function KeyValueRows({
   secondPlaceholder: string;
 }) {
   return (
-    <DynamicRows title={title} onAdd={() => setRows([...rows, { name: "", value: "" }])}>
+    <DynamicRows
+      title={title}
+      onAdd={() => setRows([...rows, { name: "", value: "" }])}
+    >
       {rows.map((row, index) => (
         <div key={index} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
           <Input
             placeholder={firstPlaceholder}
             value={row.name}
             onChange={(event) =>
-              setRows(rows.map((item, itemIndex) => (itemIndex === index ? { ...item, name: event.target.value } : item)))
+              setRows(
+                rows.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? { ...item, name: event.target.value }
+                    : item,
+                ),
+              )
             }
           />
           <Input
             placeholder={secondPlaceholder}
             value={row.value}
             onChange={(event) =>
-              setRows(rows.map((item, itemIndex) => (itemIndex === index ? { ...item, value: event.target.value } : item)))
+              setRows(
+                rows.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? { ...item, value: event.target.value }
+                    : item,
+                ),
+              )
             }
           />
-          <Button type="button" variant="outline" size="icon-sm" onClick={() => setRows(removeAt(rows, index))}>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            onClick={() => setRows(removeAt(rows, index))}
+          >
             <Trash2 />
           </Button>
         </div>

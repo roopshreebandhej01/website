@@ -18,9 +18,9 @@ const NotFound = () => {
         <Image
           src="/404.png"
           alt=""
-          fill
+          height={700}
+          width={700}
           priority
-          sizes="100vw"
           className="object-cover object-center"
         />
 

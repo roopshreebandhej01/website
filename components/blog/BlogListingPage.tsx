@@ -83,34 +83,22 @@ function BlogHero() {
   return (
     <section className="relative isolate min-h-[460px] overflow-hidden md:min-h-[520px]">
       <Image
-
         sizes="100vw"
-
-        fill
-
+        height={700}
+        width={700}
         src="/new_banners/image 274.png"
-
         alt=""
-
         priority
-
-        className="-z-10 hidden object-cover object-center md:block"
-
+        className="-z-10 hidden w-full h-auto absolute inset-0 object-cover object-center md:block"
       />
       <Image
-
         sizes="100vw"
-
-        fill
-
+        height={700}
+        width={700}
         src="/new_banners/blog-mobile.png"
-
         alt=""
-
         priority
-
-        className="-z-10 block object-cover object-center md:hidden"
-
+        className="-z-10 block object-cover absolute w-full h-full inset-0 object-center md:hidden"
       />
       <div className="mx-auto flex min-h-[460px] max-w-7xl items-center px-5 py-14 sm:px-6 md:min-h-[520px] lg:px-8">
         <div className="max-w-xl text-[#3F2617]">
@@ -144,15 +132,11 @@ export function BlogCard({ post }: { post: BlogView }) {
         <div className="relative aspect-[0.82] overflow-hidden bg-[#f7eadb]">
           {post.image ? (
             <Image
-
               width={400}
-
               height={488}
-
               src={post.image}
               alt={post.title}
               className="object-cover object-top transition duration-500 group-hover:scale-[1.04]"
-
             />
           ) : (
             <div className="flex h-full items-center justify-center px-4 text-center text-sm font-medium text-[#3F2617]/70">

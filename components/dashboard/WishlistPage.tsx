@@ -27,14 +27,17 @@ export function WishlistPage() {
       {wishlistProducts.length > 0 ? (
         <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ">
           {wishlistProducts.map((product) => (
-            <div key={product.productId} className="relative flex flex-col min-w-0 border">
+            <div
+              key={product.productId}
+              className="relative flex flex-col min-w-0 border"
+            >
               <Link href="/shop" className="group block flex-1">
                 <div className="relative aspect-[0.82] overflow-hidden bg-[#ead8c4]">
                   <Image
                     src={product.image}
                     alt={product.title}
-                    fill
-                    sizes="(min-width: 1280px) 230px, (min-width: 640px) 40vw, 90vw"
+                    height={700}
+                    width={700}
                     className="object-cover object-top transition duration-500 group-hover:scale-[1.04]"
                   />
                 </div>

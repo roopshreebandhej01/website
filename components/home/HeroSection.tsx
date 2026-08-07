@@ -16,35 +16,23 @@ const HeroSection = () => {
   return (
     <section className="relative isolate mt-16 min-h-[calc(100svh-64px)] overflow-hidden bg-[#C39150]/10 md:mt-0 md:min-h-svh">
       <Image
-
         sizes="100vw"
-
-        fill
-
+        height={1200}
+        width={1200}
         src="/new_banners/image 278.png"
-
         alt="Bandhej saree collection"
-
         priority
-
-        className="hidden object-cover object-center md:block"
-
+        className="hidden w-full h-full absolute  inset-0 object-cover object-center md:block"
       />
       <div className="absolute inset-0 md:hidden">
         <Image
-
           sizes="100vw"
-
-          fill
-
+          height={700}
+          width={700}
           src="/new_banners/hero_banner_mobile.png"
-
           alt="Bandhej saree collection"
-
           priority
-
-          className="object-cover object-top"
-
+          className="object-cover w-full h-full object-top"
         />
       </div>
       <div className="absolute inset-0 bg-white/10 md:hidden" />

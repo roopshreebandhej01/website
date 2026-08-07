@@ -1,45 +1,49 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useTransition } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { createPortal } from "react-dom"
-import { X, Star, ThumbsUp } from "lucide-react"
+import { useEffect, useState, useTransition } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import { X, Star, ThumbsUp } from "lucide-react";
 
-import { submitReviewAction } from "@/actions/review.action"
+import { submitReviewAction } from "@/actions/review.action";
 import {
   DashboardCard,
   DashboardPageTitle,
   PrimaryAction,
-} from "@/components/dashboard/DashboardPrimitives"
-import { useFileUpload } from "@/helper/upload/client"
-import { maxImageUploadSizeLabel } from "@/lib/upload-limits"
-import type { getDashboardReviewData } from "@/services/review.service"
+} from "@/components/dashboard/DashboardPrimitives";
+import { useFileUpload } from "@/helper/upload/client";
+import { maxImageUploadSizeLabel } from "@/lib/upload-limits";
+import type { getDashboardReviewData } from "@/services/review.service";
 
-type ReviewData = Awaited<ReturnType<typeof getDashboardReviewData>>
-type PendingReviewItem = ReviewData["pending"][number]
+type ReviewData = Awaited<ReturnType<typeof getDashboardReviewData>>;
+type PendingReviewItem = ReviewData["pending"][number];
 type UploadedReviewMedia = {
-  key: string
-  url: string
-  contentType: string
-}
+  key: string;
+  url: string;
+  contentType: string;
+};
 
 export function ReviewsPage({ reviewData }: { reviewData: ReviewData }) {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "submitted">("all")
-  const [selectedItem, setSelectedItem] = useState<PendingReviewItem | null>(null)
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "submitted">(
+    "all",
+  );
+  const [selectedItem, setSelectedItem] = useState<PendingReviewItem | null>(
+    null,
+  );
 
   useEffect(() => {
-    document.body.style.overflow = selectedItem ? "hidden" : ""
+    document.body.style.overflow = selectedItem ? "hidden" : "";
 
     return () => {
-      document.body.style.overflow = ""
-    }
-  }, [selectedItem])
+      document.body.style.overflow = "";
+    };
+  }, [selectedItem]);
 
-  const showPending = activeTab === "all" || activeTab === "pending"
-  const showSubmitted = activeTab === "all" || activeTab === "submitted"
+  const showPending = activeTab === "all" || activeTab === "pending";
+  const showSubmitted = activeTab === "all" || activeTab === "submitted";
 
   return (
     <div>
@@ -113,8 +117,8 @@ export function ReviewsPage({ reviewData }: { reviewData: ReviewData }) {
             <ReviewModal
               item={selectedItem}
               onSubmitted={() => {
-                setSelectedItem(null)
-                router.refresh()
+                setSelectedItem(null);
+                router.refresh();
               }}
               onClose={() => setSelectedItem(null)}
             />,
@@ -122,7 +126,7 @@ export function ReviewsPage({ reviewData }: { reviewData: ReviewData }) {
           )
         : null}
     </div>
-  )
+  );
 }
 
 function ReviewTab({
@@ -131,10 +135,10 @@ function ReviewTab({
   label,
   count,
 }: {
-  active: boolean
-  onClick: () => void
-  label: string
-  count: number
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
 }) {
   return (
     <button
@@ -146,7 +150,7 @@ function ReviewTab({
     >
       {label} ({count})
     </button>
-  )
+  );
 }
 
 function ProductSummary({ item }: { item: PendingReviewItem }) {
@@ -156,7 +160,8 @@ function ProductSummary({ item }: { item: PendingReviewItem }) {
         <Image
           src={item.image}
           alt={item.productName}
-          fill
+          height={700}
+          width={700}
           sizes="56px"
           className="object-cover object-top"
         />
@@ -169,10 +174,14 @@ function ProductSummary({ item }: { item: PendingReviewItem }) {
         <p className="text-xs text-[#777]">Qty: {item.quantity}</p>
       </div>
     </div>
-  )
+  );
 }
 
-function SubmittedReview({ review }: { review: ReviewData["submitted"][number] }) {
+function SubmittedReview({
+  review,
+}: {
+  review: ReviewData["submitted"][number];
+}) {
   return (
     <DashboardCard className="grid min-w-0 gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_216px] lg:items-center">
       <div className="min-w-0">
@@ -203,7 +212,7 @@ function SubmittedReview({ review }: { review: ReviewData["submitted"][number] }
         View Product
       </Link>
     </DashboardCard>
-  )
+  );
 }
 
 function ReviewModal({
@@ -211,52 +220,54 @@ function ReviewModal({
   onClose,
   onSubmitted,
 }: {
-  item: PendingReviewItem
-  onClose: () => void
-  onSubmitted: () => void
+  item: PendingReviewItem;
+  onClose: () => void;
+  onSubmitted: () => void;
 }) {
-  const [rating, setRating] = useState(5)
-  const [title, setTitle] = useState("")
-  const [message, setMessage] = useState("")
-  const [feedback, setFeedback] = useState("")
-  const [isPending, startTransition] = useTransition()
-  const [media, setMedia] = useState<UploadedReviewMedia[]>([])
-  const { upload, uploading } = useFileUpload()
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [media, setMedia] = useState<UploadedReviewMedia[]>([]);
+  const { upload, uploading } = useFileUpload();
 
   async function uploadReviewMedia(files: FileList | null) {
-    if (!files?.length) return
+    if (!files?.length) return;
 
-    setFeedback("")
+    setFeedback("");
 
-    const availableSlots = Math.max(0, 5 - media.length)
-    const selectedFiles = Array.from(files).slice(0, availableSlots)
+    const availableSlots = Math.max(0, 5 - media.length);
+    const selectedFiles = Array.from(files).slice(0, availableSlots);
 
     if (!selectedFiles.length) {
-      setFeedback("You can upload up to 5 photos or videos.")
-      return
+      setFeedback("You can upload up to 5 photos or videos.");
+      return;
     }
 
     try {
       const uploaded = await Promise.all(
         selectedFiles.map(async (file) => {
-          const result = await upload(file, "reviews")
+          const result = await upload(file, "reviews");
 
           return {
             key: result.fileKey,
             url: result.fileUrl,
             contentType: result.contentType,
-          }
+          };
         }),
-      )
+      );
 
-      setMedia((current) => [...current, ...uploaded])
+      setMedia((current) => [...current, ...uploaded]);
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Media upload failed.")
+      setFeedback(
+        error instanceof Error ? error.message : "Media upload failed.",
+      );
     }
   }
 
   function submitReview() {
-    setFeedback("")
+    setFeedback("");
     startTransition(async () => {
       const result = await submitReviewAction({
         orderId: item.orderId,
@@ -268,23 +279,29 @@ function ReviewModal({
           key: item.key,
           contentType: item.contentType,
         })),
-      })
+      });
 
       if (!result.success) {
-        setFeedback(result.message)
-        return
+        setFeedback(result.message);
+        return;
       }
 
-      onSubmitted()
-    })
+      onSubmitted();
+    });
   }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4 py-6 md:py-12">
       <div className="w-full max-w-lg bg-white shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex shrink-0 items-center justify-between bg-[#fbf3ea] px-6 py-5">
-          <h2 className="text-xl font-semibold text-[#C39150]">Write a Review</h2>
-          <button type="button" aria-label="Close review modal" onClick={onClose}>
+          <h2 className="text-xl font-semibold text-[#C39150]">
+            Write a Review
+          </h2>
+          <button
+            type="button"
+            aria-label="Close review modal"
+            onClick={onClose}
+          >
             <X className="size-5 text-[#777]" />
           </button>
         </div>
@@ -296,7 +313,7 @@ function ReviewModal({
             Overall Rating *
             <div className="mt-2 flex gap-2 text-[#C39150]">
               {Array.from({ length: 5 }, (_, index) => {
-                const value = index + 1
+                const value = index + 1;
 
                 return (
                   <button
@@ -310,7 +327,7 @@ function ReviewModal({
                       fill={value <= rating ? "currentColor" : "none"}
                     />
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -346,13 +363,14 @@ function ReviewModal({
               multiple
               disabled={uploading || media.length >= 5}
               onChange={(event) => {
-                void uploadReviewMedia(event.target.files)
-                event.target.value = ""
+                void uploadReviewMedia(event.target.files);
+                event.target.value = "";
               }}
               className="mt-2 block w-full text-sm text-[#555] file:mr-4 file:h-10 file:border-0 file:bg-[#C39150] file:px-4 file:text-xs file:font-semibold file:tracking-[0.08em] file:text-white disabled:opacity-60"
             />
             <span className="mt-1 block text-[10px] text-[#777]">
-              Upload up to 5 files. Photos compress to {maxImageUploadSizeLabel} max, videos max 25MB.
+              Upload up to 5 files. Photos compress to {maxImageUploadSizeLabel}{" "}
+              max, videos max 25MB.
             </span>
           </label>
 
@@ -374,9 +392,9 @@ function ReviewModal({
                     <Image
                       src={item.url}
                       alt="Review media preview"
-                      fill
+                      height={700}
+                      width={700}
                       className="object-cover"
-                      unoptimized
                     />
                   )}
                   <button
@@ -384,7 +402,9 @@ function ReviewModal({
                     aria-label="Remove media"
                     onClick={() =>
                       setMedia((current) =>
-                        current.filter((mediaItem) => mediaItem.key !== item.key),
+                        current.filter(
+                          (mediaItem) => mediaItem.key !== item.key,
+                        ),
                       )
                     }
                     className="absolute right-1 top-1 flex size-6 items-center justify-center bg-black/60 text-white"
@@ -405,12 +425,16 @@ function ReviewModal({
             disabled={isPending || uploading}
             onClick={submitReview}
           >
-            {uploading ? "Uploading..." : isPending ? "Submitting..." : "Submit"}
+            {uploading
+              ? "Uploading..."
+              : isPending
+                ? "Submitting..."
+                : "Submit"}
           </PrimaryAction>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function Stars({ filled }: { filled: number }) {
@@ -424,7 +448,7 @@ function Stars({ filled }: { filled: number }) {
         />
       ))}
     </span>
-  )
+  );
 }
 
 function EmptyState({ children }: { children: React.ReactNode }) {
@@ -432,7 +456,7 @@ function EmptyState({ children }: { children: React.ReactNode }) {
     <DashboardCard className="p-6 text-sm font-medium text-[#777]">
       {children}
     </DashboardCard>
-  )
+  );
 }
 
 function Meta({ label, value }: { label: string; value: string }) {
@@ -441,5 +465,5 @@ function Meta({ label, value }: { label: string; value: string }) {
       <p className="font-semibold text-black">{label}</p>
       <p className="mt-1">{value}</p>
     </div>
-  )
+  );
 }

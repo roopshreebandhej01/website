@@ -284,8 +284,8 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                       <Image
                         src={image.src}
                         alt={image.alt}
-                        fill
-                        sizes="(min-width: 1024px) 130px, 24vw"
+                        height={700}
+                        width={700}
                         className="object-cover object-top"
                       />
                     </button>
@@ -328,8 +328,8 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                     <Image
                       src={variant.image}
                       alt={variant.title}
-                      fill
-                      sizes="120px"
+                      height={700}
+                      width={700}
                       className="object-cover object-top"
                     />
                   ) : null}
@@ -458,8 +458,8 @@ const ProductDetails = ({ product }: { product: ProductDetailView }) => {
                           <Image
                             src={variant.image}
                             alt={variant.title}
-                            fill
-                            sizes="120px"
+                            height={700}
+                            width={700}
                             className="object-cover object-top"
                           />
                         ) : null}

@@ -111,9 +111,10 @@ const Reviews = () => {
       <Image
         src="/home/reviews_bg.png"
         alt=""
-        fill
+        height={700}
+        width={700}
         sizes="100vw"
-        className="scale-[1.02] object-cover object-center"
+        className=" w-full h-auto absolute inset-0 object-cover object-center"
       />
 
       <div className="relative mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">

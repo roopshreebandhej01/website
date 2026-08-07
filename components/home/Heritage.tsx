@@ -37,7 +37,6 @@ const Heritage = () => {
             alt="Artisan tying Bandhej fabric by hand"
             width={365}
             height={482}
-            sizes="(min-width: 1024px) 42vw, 92vw"
             className="h-auto w-full"
           />
         </div>

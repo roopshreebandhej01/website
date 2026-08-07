@@ -1,6 +1,6 @@
-import Image from "next/image"
+import Image from "next/image";
 
-import { qualityItems } from "./about-data"
+import { qualityItems } from "./about-data";
 
 const QualityHighlights = () => {
   return (
@@ -17,7 +17,8 @@ const QualityHighlights = () => {
                 <Image
                   src={item.image}
                   alt={item.title}
-                  fill
+                  height={700}
+                  width={700}
                   sizes="144px"
                   className="object-cover"
                 />
@@ -33,7 +34,7 @@ const QualityHighlights = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default QualityHighlights
+export default QualityHighlights;
