@@ -21,10 +21,10 @@ const NotFound = () => {
           height={700}
           width={700}
           priority
-          className="object-cover object-center"
+          className="object-cover absolute inset-0 w-full h-full object-center"
         />
 
-        <div className="relative mx-auto max-w-7xl">
+        <div className="relative mx-auto py-12 max-w-7xl">
           <div className="mx-auto max-w-xl">
             <div className="flex items-center justify-center gap-3 text-[6rem] font-bold leading-none text-[#3f2617] sm:text-[7.5rem]">
               <span>4</span>

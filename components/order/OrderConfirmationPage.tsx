@@ -58,7 +58,7 @@ export function OrderConfirmationPage({
         src="/orderconfirm-bg.png"
         alt=""
         priority
-        className="-z-10 object-cover object-top"
+        className="-z-10 w-full h-full absolute inset-0 object-cover object-top"
       />
 
       <section className="mx-auto flex w-full max-w-[820px] flex-col items-center px-4 pb-12 pt-8 sm:px-6 lg:px-8">

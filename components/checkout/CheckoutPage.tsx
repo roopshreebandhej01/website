@@ -22,7 +22,7 @@ export function CheckoutPage({
           width={700}
           priority
           sizes="100vw"
-          className="-z-10 object-cover object-top"
+          className="-z-10 w-full h-full absolute inset-0 object-cover object-top"
         />
 
         <div className="mx-auto w-full max-w-[760px] px-4 pb-12 pt-7 sm:px-6 md:pb-20 md:pt-12 lg:px-0">
