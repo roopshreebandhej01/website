@@ -2,6 +2,14 @@ import { createHmac } from 'node:crypto'
 import { NextResponse, type NextRequest } from 'next/server'
 import { verifyAdminSession, ADMIN_ACCESS_COOKIE_NAME } from '@/lib/admin-access-cookie'
 
+const apiCorsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers':
+    'Content-Type, Authorization, X-Requested-With, x-razorpay-signature',
+  'Access-Control-Max-Age': '86400',
+}
+
 const authCookieNames = {
   accessToken: 'rs_access_token',
   idToken: 'rs_id_token',
@@ -240,6 +248,13 @@ function clearAuthCookiesFromResponse(response: NextResponse) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  if (pathname.startsWith('/api') && request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: apiCorsHeaders,
+    })
+  }
 
   // 1. Admin API Route Protection
   if (pathname.startsWith('/api/admin')) {

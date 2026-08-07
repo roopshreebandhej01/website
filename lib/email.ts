@@ -81,7 +81,7 @@ export const sendEmail = async ({
   html,
 }: SendEmailParams) => {
   const command = new SendEmailCommand({
-    Source: process.env.EMAIL_FROM!,
+    Source: 'roopshreebandhej@avtechnosys.com',
     Destination: {
       ToAddresses: [to],
     },

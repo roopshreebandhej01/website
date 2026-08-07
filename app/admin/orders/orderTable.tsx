@@ -21,6 +21,9 @@ export type OrderRow = {
   totalAmount: number;
   addressLine1: string;
   addressLine2: string | null;
+  userName: string | null;
+  userEmail: string | null;
+  createdAt: Date;
 };
 
 type OrderTableProps = {
@@ -57,10 +60,11 @@ export default function OrderTable({
         <TableHeader>
           <TableRow>
             <TableHead>S.No</TableHead>
-            <TableHead>Order ID</TableHead>
+            <TableHead>Customer Name</TableHead>
+            <TableHead>Order date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Total Amount</TableHead>
-            <TableHead>Address Line 1</TableHead>
+            <TableHead className=" w-52">Address Line 1</TableHead>
             <TableHead className="text-end">Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -72,7 +76,12 @@ export default function OrderTable({
                 className={isPending ? "opacity-60" : ""}
               >
                 <TableCell>{startIndex + index + 1}</TableCell>
-                <TableCell>{order.id}</TableCell>
+                <TableCell>
+                  {order.userName || order.userEmail || "Guest"}
+                </TableCell>
+                <TableCell>
+                  {new Date(order.createdAt).toLocaleDateString("en-IN")}
+                </TableCell>
                 <TableCell>
                   <div className="min-w-36">
                     <Select
@@ -107,7 +116,9 @@ export default function OrderTable({
                 <TableCell>
                   ₹{(order.totalAmount / 100).toLocaleString("en-IN")}
                 </TableCell>
-                <TableCell>{order.addressLine1}</TableCell>
+                <TableCell className="w-52 max-w-52 whitespace-normal break-words">
+                  {order.addressLine1}
+                </TableCell>
                 <TableCell className="text-right">
                   <Link
                     href={`${pathname}/${order.id}/invoice`}

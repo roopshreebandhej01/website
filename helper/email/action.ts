@@ -19,11 +19,11 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "";
 }
 
-function getLogoUrl() {
-  const baseUrl = getBaseUrl().replace(/\/$/, "");
+// function getLogoUrl() {
+//   const baseUrl = getBaseUrl().replace(/\/$/, "");
 
-  return process.env.EMAIL_LOGO_URL || (baseUrl ? `${baseUrl}/header-logo.png` : "");
-}
+//   return process.env.EMAIL_LOGO_URL || (baseUrl ? `${baseUrl}/header-logo.png` : "");
+// }
 
 function sendUserTemplateEmail({
   to,
@@ -43,7 +43,7 @@ function sendUserTemplateEmail({
     template,
     data: {
       baseUrl: getBaseUrl(),
-      logoUrl: getLogoUrl(),
+     // logoUrl: getLogoUrl(),
       email: to,
       "Customer First Name": data?.customerName || data?.userName || "",
       ...data,
@@ -69,7 +69,7 @@ function sendGenericTemplateEmail({
     template,
     data: {
       baseUrl: getBaseUrl(),
-      logoUrl: getLogoUrl(),
+      //logoUrl: getLogoUrl(),
       email: to,
       "Customer First Name": data?.customerName || data?.userName || "",
       ...data,
@@ -103,7 +103,7 @@ export async function getWelcomeTemplate(name: string) {
 
   return injectTemplate(html, {
     name,
-    logoUrl: getLogoUrl(),
+    //logoUrl: getLogoUrl(),
     "Customer First Name": name,
   });
 }
@@ -126,7 +126,7 @@ export async function getOrderTemplate(data: {
 
   return injectTemplate(html, {
     ...data,
-    logoUrl: getLogoUrl(),
+   // logoUrl: getLogoUrl(),
     "Customer First Name": data.customerName,
     "Order ID": data.orderId,
     "Order Date": getDeliveryDateValue(),

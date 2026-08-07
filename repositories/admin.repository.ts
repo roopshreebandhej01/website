@@ -23,18 +23,37 @@ export async function findOrdersPage(query: OrderQuery) {
 
   if (query.search?.trim()) {
     const search = `%${query.search.trim()}%`
-    filters.push(or(sql`${orders.id}::text ILIKE ${search}`, ilike(orders.orderNumber, search)))
+    filters.push(
+      or(
+        sql`${orders.id}::text ILIKE ${search}`,
+        ilike(orders.orderNumber, search),
+        ilike(users.name, search),
+        ilike(users.email, search)
+      )
+    )
   }
 
   const where = filters.length ? and(...filters) : undefined
   const [totalResult] = await db
     .select({ value: count() })
     .from(orders)
+    .leftJoin(users, eq(orders.userId, users.id))
     .where(where)
 
   const data = await db
-    .select()
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      status: orders.status,
+      totalAmount: orders.totalAmount,
+      addressLine1: orders.addressLine1,
+      addressLine2: orders.addressLine2,
+      createdAt: orders.createdAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
     .from(orders)
+    .leftJoin(users, eq(orders.userId, users.id))
     .where(where)
     .orderBy(desc(orders.createdAt))
     .limit(pageSize)

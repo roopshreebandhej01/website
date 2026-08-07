@@ -204,7 +204,11 @@ export async function getDashboardOrderDetails(orderId: string) {
 export async function getOrderConfirmationDetails(orderId: string) {
   const details = await findOrderConfirmationDetailRow(orderId)
 
-  if (!details) {
+  if (
+    !details ||
+    !details.payment ||
+    !['paid', 'pending'].includes(details.payment.status)
+  ) {
     return null
   }
 
@@ -218,6 +222,7 @@ export async function getOrderConfirmationDetails(orderId: string) {
     order: {
       orderId: details.order.orderNumber,
       email: details.user?.email ?? '',
+      isPaid: details.payment.status === 'paid',
       orderDate: formatDate(details.order.createdAt),
       paymentMethod:
         details.payment?.method?.toUpperCase() ??
@@ -258,7 +263,7 @@ export async function getOrderConfirmationDetails(orderId: string) {
 export async function getOrderConfirmationInvoiceDetails(orderId: string): Promise<InvoiceData | null> {
   const details = await findOrderConfirmationDetailRow(orderId)
 
-  if (!details) {
+  if (!details || details.payment?.status !== 'paid') {
     return null
   }
 
