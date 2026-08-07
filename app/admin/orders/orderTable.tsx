@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { updateOrderStatus } from "@/helper/index";
+import { cn } from "@/lib/utils";
 
 export type OrderRow = {
   id: string;
@@ -33,7 +34,6 @@ type OrderTableProps = {
 };
 
 const orderStatus = [
-  { value: "pending", label: "Pending" },
   { value: "confirmed", label: "Confirmed" },
   { value: "paid", label: "Paid" },
   { value: "processing", label: "Processing" },
@@ -73,7 +73,10 @@ export default function OrderTable({
             orderRows.map((order, index) => (
               <TableRow
                 key={order.id}
-                className={isPending ? "opacity-60" : ""}
+                className={cn(
+                  isPending ? "opacity-60" : "",
+                  order.status == "paid" ? "bg-green-200" : "",
+                )}
               >
                 <TableCell>{startIndex + index + 1}</TableCell>
                 <TableCell>

@@ -24,9 +24,9 @@ export async function getDashboardStats() {
       }>(sql`
         select
           (select count(*)::int from ${products}) as "totalProducts",
-          (select count(*)::int from ${orders}) as "totalOrders",
+          (select count(*)::int from ${orders} where ${orders.status} != 'pending') as "totalOrders",
           (select count(*)::int from ${users}) as "totalUsers",
-          (select coalesce(sum(${orders.totalAmount}), 0) from ${orders}) as "totalRevenueInPaise"
+          (select coalesce(sum(${orders.totalAmount}), 0) from ${orders} where ${orders.status} != 'pending') as "totalRevenueInPaise"
       `),
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error("Dashboard stats timed out")), 4_000);

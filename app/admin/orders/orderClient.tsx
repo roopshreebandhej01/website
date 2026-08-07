@@ -29,7 +29,6 @@ type OrderClientProps = {
 };
 
 const orderStatus = [
-  { value: "pending", label: "Pending" },
   { value: "confirmed", label: "Confirmed" },
   { value: "paid", label: "Paid" },
   { value: "processing", label: "Processing" },
