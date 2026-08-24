@@ -2,7 +2,13 @@ import ProductDetails from "@/components/product/ProductDetails";
 import ProductDescriptionReviews from "@/components/product/ProductDescriptionReviews";
 import YouMayAlsoLike from "@/components/product/YouMayAlsoLike";
 import { getProductDetailsBySlug } from "@/services/product.service";
-import { BadgeCheck, Leaf, LockKeyhole, Truck } from "lucide-react";
+import {
+  BadgeCheck,
+  Leaf,
+  LockKeyhole,
+  PackageCheck,
+  Truck,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -23,7 +29,7 @@ const benefits = [
   {
     icon: Truck,
     title: "Free Shipping",
-    description: "With Love & Tradition",
+    description: "Get free shipping on orders above ₹500",
   },
   {
     icon: BadgeCheck,
@@ -31,9 +37,9 @@ const benefits = [
     description: "Finest Fabrics",
   },
   {
-    icon: Leaf,
-    title: "Natural Dyes",
-    description: "Eco-Friendly Colours",
+    icon: PackageCheck,
+    title: "Delivery in 6–7 Days",
+    description: "Your order will be delivered within 6–7 days.",
   },
   {
     icon: LockKeyhole,
@@ -65,14 +71,16 @@ function BenefitsSection() {
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="mt-5 grid gap-x-8 gap-y-8 rounded-[4px] border border-[#ead8c5] bg-[#fcf8f1] px-8 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-12">
           {benefits.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="flex items-center gap-5 text-[#3f2617]">
-              <Icon className="size-9 shrink-0 text-[#c39150]" />
-              <div>
-                <h3 className="font-heading text-base uppercase leading-tight  xl:text-sm">
+            <div key={title} className="space-y-1.5 text-[#3f2617]">
+              <div className=" flex gap-1.5">
+                <Icon className="size-5 shrink-0 text-[#c39150]" />
+                <h3 className="font-heading text-base uppercase leading-tight">
                   {title}
                 </h3>
-                <p className="mt-1 text-sm text-[#3f2617]/90">{description}</p>
               </div>
+              <p className="mt-1 pl-7 text-xs text-[#3f2617]/90">
+                {description}
+              </p>
             </div>
           ))}
         </div>
