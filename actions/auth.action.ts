@@ -24,7 +24,7 @@ import {
   getClearAuthCookiePayload,
 } from '@/lib/auth-cookies'
 import { getUserClaimsFromIdToken } from '@/lib/auth-token'
-import { requireUser, ADMIN_EMAILS } from '@/lib/auth'
+import { getCurrentSession, requireUser, ADMIN_EMAILS } from '@/lib/auth'
 import { notifyWelcomeEmail } from '@/lib/email-notifications'
 import { syncProfileFromAuthClaimsService } from '@/services/user.service'
 
@@ -148,6 +148,12 @@ export async function signInAction({
 
     return { ok: false, error: 'Invalid email or password' }
   }
+}
+
+export async function getAuthStatusAction() {
+  const session = await getCurrentSession()
+
+  return { isAuthenticated: Boolean(session) }
 }
 
 export async function signUpAction({

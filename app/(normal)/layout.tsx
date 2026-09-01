@@ -1,12 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-// @ts-ignore
-import { IconBrandWhatsapp } from "@tabler/icons-react";
 
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 import { StoreHydrator } from "@/components/global/StoreHydrator";
 import { getCurrentSession } from "@/lib/auth";
+import { IconBrandWhatsapp } from "@tabler/icons-react";
 
 export default async function Layout({
   children,
@@ -19,7 +18,7 @@ export default async function Layout({
     <>
       <StoreHydrator isAuthenticated={Boolean(session)} />
       <Suspense>
-        <Header isAuthenticated={Boolean(session && session?.user?.email)} />
+        <Header isAuthenticated={Boolean(session)} />
       </Suspense>
       {children}
       <Footer />

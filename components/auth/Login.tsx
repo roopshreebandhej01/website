@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { signInAction } from "@/actions/auth.action";
 import { useToast } from "@/components/common/ToastProvider";
@@ -15,7 +15,6 @@ export default function Login({
   onCreateAccount?: () => void;
   onForgotPassword?: () => void;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -44,12 +43,8 @@ export default function Login({
     }
 
     showToast({ title: "Logged in successfully", tone: "success" });
-    if (response.isAdmin) {
-      router.push("/admin");
-    } else {
-      router.push(callbackUrl);
-    }
-    router.refresh();
+    const destination = response.isAdmin ? "/admin" : callbackUrl;
+    window.location.assign(destination);
   }
 
   return (

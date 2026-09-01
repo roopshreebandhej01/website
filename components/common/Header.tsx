@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 
+import { getAuthStatusAction } from "@/actions/auth.action";
 import { searchCatalogAction } from "@/actions/product.action";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/components/global/const";
@@ -26,6 +27,9 @@ const navLinks = [
 
 const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
   const pathname = usePathname();
+  const [clientAuthStatus, setClientAuthStatus] = useState<{
+    isAuthenticated: boolean;
+  } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +47,34 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
   const clearCart = useCartStore((state) => state.clearCart);
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const clearWishlist = useWishlistStore((state) => state.clearWishlist);
+  const resolvedIsAuthenticated =
+    isAuthenticated || clientAuthStatus?.isAuthenticated === true;
+  const hasResolvedAuth = isAuthenticated || clientAuthStatus !== null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function resolveAuthStatus() {
+      try {
+        const status = await getAuthStatusAction();
+
+        if (!isMounted) return;
+
+        setClientAuthStatus(status);
+      } catch (error) {
+        console.error("Unable to resolve header auth status:", error);
+        if (isMounted) {
+          setClientAuthStatus({ isAuthenticated: false });
+        }
+      }
+    }
+
+    resolveAuthStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, pathname]);
 
   useEffect(() => {
     const onScroll = () => setHasScrolled(window.scrollY > 12);
@@ -62,11 +94,11 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    if (isAuthenticated) return;
+    if (!hasResolvedAuth || resolvedIsAuthenticated) return;
 
     clearCart();
     clearWishlist();
-  }, [clearCart, clearWishlist, isAuthenticated]);
+  }, [clearCart, clearWishlist, hasResolvedAuth, resolvedIsAuthenticated]);
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -190,7 +222,7 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
               ))}
             </nav>
 
-            {isAuthenticated ? (
+            {resolvedIsAuthenticated ? (
               <Button
                 asChild
                 className="mt-auto h-12 rounded-[4px] bg-[#C39150] text-base text-white hover:bg-[#3F2617]"
@@ -345,7 +377,7 @@ const Header = ({ isAuthenticated = false }: { isAuthenticated?: boolean }) => {
               ) : null}
             </div>
 
-            {isAuthenticated ? (
+            {resolvedIsAuthenticated ? (
               <Link href="/dashboard">
                 <Button aria-label="Account" size="icon-sm" variant="ghost">
                   <User size={22} />

@@ -8,6 +8,7 @@ declare module "@tabler/icons-react" {
 
   export const IconBrandInstagram: ComponentType<IconProps>
   export const IconBrandFacebook: ComponentType<IconProps>
+  export const IconBrandWhatsapp: ComponentType<IconProps>
   export const IconDeviceFloppy: ComponentType<IconProps>
   export const IconMail: ComponentType<IconProps>
   export const IconPhoto: ComponentType<IconProps>

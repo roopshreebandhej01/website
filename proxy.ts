@@ -292,6 +292,7 @@ export async function proxy(request: NextRequest) {
 
   // 3. User Session Refresh & Route Protection
   const isProtectedRoute = pathname.startsWith('/dashboard')
+  const isAuthRoute = pathname === '/auth'
   const refreshToken = request.cookies.get(authCookieNames.refreshToken)?.value
 
   // If on a protected route but no refresh token is present, redirect to /auth
@@ -344,11 +345,13 @@ export async function proxy(request: NextRequest) {
 
         applyAuthCookiesToRequest(request, cookiesPayload)
 
-        const response = NextResponse.next({
-          request: {
-            headers: request.headers,
-          },
-        })
+        const response = isAuthRoute
+          ? NextResponse.redirect(new URL('/dashboard', request.url))
+          : NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            })
 
         applyAuthCookiesToResponse(response, cookiesPayload)
         return response
@@ -365,6 +368,10 @@ export async function proxy(request: NextRequest) {
           return response
         }
       }
+    }
+
+    if (isAuthRoute) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
