@@ -51,10 +51,8 @@ function getS3ClientConfig(): S3ClientConfig {
 export const s3Client = new S3Client(getS3ClientConfig())
 
 export function getS3ObjectPreviewUrl(key: string) {
-  const publicBaseUrl =
-    process.env.S3_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_S3_BASE_URL
-
-  const s3Hostname = `https://${getS3BucketName()}.s3.${getS3Region()}.amazonaws.com/`
+  const publicBaseUrl = 'https://d2co0ksrpuk490.cloudfront.net/'
+  const s3Hostname = `https://d2co0ksrpuk490.cloudfront.net/`
 
   if (key.startsWith('http://') || key.startsWith('https://')) {
     if (publicBaseUrl && key.startsWith(s3Hostname)) {
