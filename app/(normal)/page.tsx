@@ -116,8 +116,8 @@ async function HomeDataSections() {
   const [categories, newArrivals, trendingProducts, featuredProducts] =
     await Promise.all([
       getCatalogCategories(5),
-      getNewArrivalProducts(4),
-      getTrendingProducts(5),
+      getNewArrivalProducts(8),
+      getTrendingProducts(8),
       getFeaturedProducts(8),
     ]);
 
