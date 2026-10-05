@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import {
   isCapturedRazorpayPayment,
@@ -26,14 +26,60 @@ export const runtime = 'nodejs'
 
 export const dynamic = 'force-dynamic'
 
-// How many times we allow the Zoho push to fail before giving up.
-// Razorpay retries a 503 response at roughly 15 min, 30 min, then 1 hr.
-// After MAX_ZOHO_RETRIES failures we return 200 so Razorpay stops retrying.
-const MAX_ZOHO_RETRIES = 3
+// One initial Zoho attempt plus three retry opportunities.
+const ZOHO_MAX_ATTEMPTS = 4
+const ZOHO_LOCK_TTL_MS = 9 * 60 * 1000
+const ZOHO_RETRY_DELAYS_MS = [
+  10 * 60 * 1000,
+  30 * 60 * 1000,
+  60 * 60 * 1000,
+] as const
 
 function asMetaRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   return value as Record<string, unknown>
+}
+
+function getMetaTime(value: unknown): number | null {
+  if (typeof value !== 'string') return null
+
+  const time = Date.parse(value)
+  return Number.isNaN(time) ? null : time
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+async function releaseZohoLock({
+  razorpayOrderId,
+  lockToken,
+  metadata,
+  error,
+}: {
+  razorpayOrderId: string
+  lockToken: string
+  metadata: Record<string, unknown>
+  error: string
+}) {
+  await db
+    .update(payments)
+    .set({
+      metadata: {
+        ...metadata,
+        zoho_sync_lock_token: null,
+        zoho_sync_lock_until: null,
+        zoho_last_error: error,
+        zoho_last_failed_at: new Date().toISOString(),
+      },
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(payments.providerOrderId, razorpayOrderId),
+        sql`${payments.metadata}->>'zoho_sync_lock_token' = ${lockToken}`,
+      ),
+    )
 }
 
 /**
@@ -41,8 +87,9 @@ function asMetaRecord(value: unknown): Record<string, unknown> {
  *
  * Tracks attempt state in payments.metadata so:
  *  - A successful push is never duplicated (zoho_synced: true guard)
+ *  - Concurrent webhook deliveries cannot push the same lead at the same time
  *  - Failed pushes are retried via Razorpay's webhook retry (503 response)
- *  - Retries stop after MAX_ZOHO_RETRIES attempts
+ *  - Retries stop after one initial attempt plus three retry attempts
  *
  * Returns { shouldRetry: true } when we want Razorpay to retry (503),
  * { shouldRetry: false } when we're done (either succeeded or gave up).
@@ -77,12 +124,68 @@ async function syncOrderToZoho(
   const attemptCount =
     typeof meta.zoho_attempt_count === 'number' ? meta.zoho_attempt_count : 0
 
-  // Exhausted all retries; give up and return 200 so Razorpay stops.
-  if (attemptCount >= MAX_ZOHO_RETRIES) {
+  if (attemptCount >= ZOHO_MAX_ATTEMPTS) {
     console.error(
-      `[Zoho Sync] Giving up after ${MAX_ZOHO_RETRIES} failed attempts: ${razorpayOrderId}`,
+      `[Zoho Sync] Giving up after ${ZOHO_MAX_ATTEMPTS} failed attempts: ${razorpayOrderId}`,
     )
     return { shouldRetry: false }
+  }
+
+  const nextRetryAt = getMetaTime(meta.zoho_next_retry_at)
+  if (attemptCount > 0 && nextRetryAt && nextRetryAt > Date.now()) {
+    console.warn(`[Zoho Sync] Waiting for scheduled retry: ${razorpayOrderId}`)
+    return { shouldRetry: true }
+  }
+
+  const lockUntilTime = getMetaTime(meta.zoho_sync_lock_until)
+  if (lockUntilTime && lockUntilTime > Date.now()) {
+    console.warn(`[Zoho Sync] Sync already in progress: ${razorpayOrderId}`)
+    return { shouldRetry: true }
+  }
+
+  const nextAttemptCount = attemptCount + 1
+  const lockToken = `${razorpayOrderId}:${nextAttemptCount}:${Date.now()}`
+  const lockMetadata = {
+    ...meta,
+    zoho_attempt_count: nextAttemptCount,
+    zoho_sync_lock_token: lockToken,
+    zoho_sync_lock_until: new Date(Date.now() + ZOHO_LOCK_TTL_MS).toISOString(),
+  }
+
+  const [lock] = await db
+    .update(payments)
+    .set({
+      metadata: lockMetadata,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(payments.providerOrderId, razorpayOrderId),
+        sql`coalesce((${payments.metadata}->>'zoho_synced')::boolean, false) = false`,
+        sql`coalesce((${payments.metadata}->>'zoho_attempt_count')::int, 0) = ${attemptCount}`,
+        sql`(
+          ${payments.metadata}->>'zoho_sync_lock_until' is null
+          or (${payments.metadata}->>'zoho_sync_lock_until')::timestamptz <= now()
+        )`,
+      ),
+    )
+    .returning({ metadata: payments.metadata })
+
+  if (!lock) {
+    const [latestPayment] = await db
+      .select({ metadata: payments.metadata })
+      .from(payments)
+      .where(eq(payments.providerOrderId, razorpayOrderId))
+      .limit(1)
+
+    const latestMeta = asMetaRecord(latestPayment?.metadata)
+    if (latestMeta.zoho_synced === true) {
+      console.log(`[Zoho Sync] Already synced, skipping: ${razorpayOrderId}`)
+      return { shouldRetry: false }
+    }
+
+    console.warn(`[Zoho Sync] Could not acquire sync lock: ${razorpayOrderId}`)
+    return { shouldRetry: true }
   }
 
   const [order] = await db
@@ -105,6 +208,12 @@ async function syncOrderToZoho(
 
   if (!order) {
     console.error(`[Zoho Sync] Order not found: ${payment.orderId}`)
+    await releaseZohoLock({
+      razorpayOrderId,
+      lockToken,
+      metadata: lockMetadata,
+      error: `Order not found: ${payment.orderId}`,
+    })
     return { shouldRetry: false }
   }
 
@@ -120,6 +229,12 @@ async function syncOrderToZoho(
 
   if (items.length === 0) {
     console.error(`[Zoho Sync] No items found for order: ${order.orderNumber}`)
+    await releaseZohoLock({
+      razorpayOrderId,
+      lockToken,
+      metadata: lockMetadata,
+      error: `No items found for order: ${order.orderNumber}`,
+    })
     return { shouldRetry: false }
   }
 
@@ -146,16 +261,6 @@ async function syncOrderToZoho(
     }
   }
 
-  // Write the attempt before calling Zoho so a mid-push crash is still counted.
-  const nextAttemptCount = attemptCount + 1
-  await db
-    .update(payments)
-    .set({
-      metadata: { ...meta, zoho_attempt_count: nextAttemptCount },
-      updatedAt: new Date(),
-    })
-    .where(eq(payments.providerOrderId, razorpayOrderId))
-
   try {
     await pushLeadToZohoFlow(
       buildZohoPayload({
@@ -179,22 +284,47 @@ async function syncOrderToZoho(
       .update(payments)
       .set({
         metadata: {
-          ...meta,
+          ...lockMetadata,
           zoho_synced: true,
           zoho_attempt_count: nextAttemptCount,
+          zoho_sync_lock_token: null,
+          zoho_sync_lock_until: null,
+          zoho_next_retry_at: null,
+          zoho_last_error: null,
+          zoho_synced_at: new Date().toISOString(),
         },
         updatedAt: new Date(),
       })
-      .where(eq(payments.providerOrderId, razorpayOrderId))
+      .where(
+        and(
+          eq(payments.providerOrderId, razorpayOrderId),
+          sql`${payments.metadata}->>'zoho_sync_lock_token' = ${lockToken}`,
+        ),
+      )
 
     console.log(
       `[Zoho Sync] Lead pushed - order: ${order.orderNumber}, attempt: ${nextAttemptCount}`,
     )
     return { shouldRetry: false }
   } catch (err) {
-    const shouldRetry = nextAttemptCount < MAX_ZOHO_RETRIES
+    const shouldRetry = nextAttemptCount < ZOHO_MAX_ATTEMPTS
+    const retryDelay = ZOHO_RETRY_DELAYS_MS[nextAttemptCount - 1]
+
+    await releaseZohoLock({
+      razorpayOrderId,
+      lockToken,
+      metadata: {
+        ...lockMetadata,
+        zoho_next_retry_at:
+          shouldRetry && retryDelay
+            ? new Date(Date.now() + retryDelay).toISOString()
+            : null,
+      },
+      error: getErrorMessage(err),
+    })
+
     console.error(
-      `[Zoho Sync] Push failed (attempt ${nextAttemptCount}/${MAX_ZOHO_RETRIES}), ` +
+      `[Zoho Sync] Push failed (attempt ${nextAttemptCount}/${ZOHO_MAX_ATTEMPTS}), ` +
         `shouldRetry=${shouldRetry}, order: ${order.orderNumber}`,
       err,
     )
@@ -288,9 +418,8 @@ export async function POST(
       const { shouldRetry } = await syncOrderToZoho(providerOrderId)
 
       if (shouldRetry) {
-        // 503 tells Razorpay to retry at roughly 15 min, 30 min, then 1 hr.
-        // After MAX_ZOHO_RETRIES failures syncOrderToZoho returns shouldRetry=false
-        // and we fall through to the 200 below.
+        // Returning 503 asks Razorpay to retry this webhook delivery. Razorpay
+        // controls the exact retry timing; our side stops after three retries.
         return Response.json({ retry: true }, { status: 503 })
       }
 
