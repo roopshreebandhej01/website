@@ -32,7 +32,7 @@ const reviews = [
   },
   {
     quote:
-      "Super happy with the product that I have recieved, the behaviour is so comforting and assisting ...thank you sooo much",
+      "Super happy with the product that I have received, the behaviour is so comforting and assisting ...thank you sooo much",
     name: "Nilam Rani",
   },
 ];
@@ -181,7 +181,7 @@ const Reviews = () => {
         </div>
 
         <p className="mx-auto mt-5 max-w-2xl text-center font-heading text-base leading-6 text-[#3f2617] sm:mt-6 sm:text-xl">
-          Thank you for being a part of out journey.
+          Thank you for being a part of our journey.
           <span className="block font-heading italic text-[#c39150]">
             Your trust inspires us every day.
           </span>

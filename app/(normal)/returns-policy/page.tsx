@@ -141,7 +141,7 @@ export default function ReturnsPolicy() {
                     Important:
                   </span>
                   <span>
-                    Return request must be raised within{" "}
+                    Return requests must be raised within{" "}
                     <strong>48 hours</strong> of delivery.
                   </span>
                 </li>
