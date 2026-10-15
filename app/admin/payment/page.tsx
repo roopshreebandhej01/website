@@ -1,4 +1,3 @@
-import { pageSize as defaultPageSize } from "@/const/globalconst";
 import PaymentClient from "./paymentClient";
 import { fetchPurchasePayments } from "@/helper/index";
 
@@ -11,6 +10,8 @@ interface PageProps {
   }>;
 }
 
+const PAGE_SIZE = 5;
+
 function toInt(value: string | undefined, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -20,7 +21,7 @@ const Page = async ({ searchParams }: PageProps) => {
   const params = await searchParams;
 
   const page = toInt(params.page, 1);
-  const pageSize = toInt(params.page_size, defaultPageSize);
+  const pageSize = toInt(params.page_size, PAGE_SIZE);
   const search = params.search ?? "";
   const paymentStatus = params.payment_status ?? "";
 

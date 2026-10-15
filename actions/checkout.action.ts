@@ -2,7 +2,7 @@
 
 import crypto from "node:crypto"
 
-import { and, eq } from "drizzle-orm"
+import { and, count, desc, eq, or } from "drizzle-orm"
 
 import {
   cartItems,
@@ -20,32 +20,24 @@ import {
 import { addresses, users } from "@/db/schema/users"
 import { db } from "@/lib/db"
 import { getCurrentDbUserId } from "@/lib/current-db-user"
-import { getPaiseOrderSummary } from "@/lib/checkout-pricing"
+import { getCurrentUser } from "@/lib/auth"
+import { generateMerchantTxnNo, initiateIciciSale } from "@/lib/icici"
 import {
-  fetchRazorpayPayment,
-  getRazorpayKeyId,
-  getRazorpaySecret,
-  isCapturedRazorpayPayment,
-} from "@/lib/razorpay"
+  notifyFirstOrderEmail,
+  notifyOrderConfirmationEmail,
+} from "@/lib/email-notifications"
+import { getS3ObjectPreviewUrl } from "@/lib/s3"
 
 type ShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
-  secondPhone?: string
-  email?: string
   addressLine1: string
   addressLine2?: string
   city: string
   state: string
   postalCode: string
   country?: string
-}
-
-type GuestCartItem = {
-  productId: string
-  variantId?: string | null
-  quantity: number
 }
 
 type CheckoutItemSnapshot = {
@@ -61,7 +53,6 @@ type CheckoutItemSnapshot = {
 }
 
 type CheckoutTokenPayload = {
-  orderId?: string
   userId: string
   source: "cart" | "buy-now"
   providerOrderId: string
@@ -70,8 +61,6 @@ type CheckoutTokenPayload = {
   items: CheckoutItemSnapshot[]
   createdAt: number
 }
-
-type PendingCheckoutOrderPayload = Omit<CheckoutTokenPayload, "providerOrderId">
 
 type RazorpayOrderResponse = {
   id: string
@@ -88,7 +77,13 @@ type RazorpaySuccessPayload = {
 
 const currency = "INR"
 
-class CheckoutActionError extends Error {}
+function getRazorpayKeyId() {
+  return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+}
+
+function getRazorpaySecret() {
+  return process.env.RAZORPAY_KEY_SECRET
+}
 
 function getCheckoutSigningSecret() {
   return process.env.CHECKOUT_TOKEN_SECRET ?? getRazorpaySecret()
@@ -99,8 +94,6 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
     addressId: input.addressId?.trim() || undefined,
     fullName: input.fullName?.trim() ?? "",
     phone: input.phone?.trim() ?? "",
-    secondPhone: input.secondPhone?.trim() || undefined,
-    email: input.email?.trim() || undefined,
     addressLine1: input.addressLine1?.trim() ?? "",
     addressLine2: input.addressLine2?.trim() || undefined,
     city: input.city?.trim() ?? "",
@@ -112,13 +105,11 @@ function normalizeShippingDetails(input: ShippingDetails): ShippingDetails {
 
 function mapAddressToShipping(
   address: typeof addresses.$inferSelect,
-  secondPhone?: string,
 ): ShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
-    secondPhone,
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", ") || undefined,
     city: address.city,
@@ -140,14 +131,6 @@ async function findUserAddress(userId: string, addressId: string) {
 
 async function resolveShippingDetails(userId: string, input: ShippingDetails) {
   const shipping = normalizeShippingDetails(input)
-  const secondPhoneError = getSecondPhoneValidationError(shipping.secondPhone)
-
-  if (secondPhoneError) {
-    return {
-      ok: false as const,
-      message: secondPhoneError,
-    }
-  }
 
   if (shipping.addressId) {
     const address = await findUserAddress(userId, shipping.addressId)
@@ -156,26 +139,10 @@ async function resolveShippingDetails(userId: string, input: ShippingDetails) {
       return { ok: false as const, message: "Selected address was not found" }
     }
 
-    return {
-      ok: true as const,
-      shipping: {
-        ...mapAddressToShipping(address, shipping.secondPhone),
-        email: shipping.email,
-      },
-    }
+    return { ok: true as const, shipping: mapAddressToShipping(address) }
   }
 
   return validateManualShippingDetails(shipping)
-}
-
-function getSecondPhoneValidationError(secondPhone?: string) {
-  const phone2Digits = secondPhone?.replace(/[^\d]/g, '') ?? ''
-
-  if (phone2Digits && phone2Digits.length !== 10) {
-    return "Alternate phone number must be exactly 10 digits"
-  }
-
-  return null
 }
 
 function validateManualShippingDetails(input: ShippingDetails) {
@@ -207,23 +174,40 @@ function getOrderNumber() {
   return `RS-${stamp}-${suffix}`
 }
 
-function getTotals(items: CheckoutItemSnapshot[]) {
-  return getPaiseOrderSummary(
-    items.map((item) => ({
-      price: item.productPrice,
-      quantity: item.quantity,
-    })),
-  )
+const DELIVERY_CHARGE_PAISE = 7000 // ₹70 in paise
+const FREE_DELIVERY_THRESHOLD_PAISE = 50000 // ₹500 in paise
+
+function getDeliveryChargePaise(subtotalPaise: number): number {
+  if (subtotalPaise <= 0) return 0
+  return subtotalPaise >= FREE_DELIVERY_THRESHOLD_PAISE ? 0 : DELIVERY_CHARGE_PAISE
 }
 
-function assertTimingSafeEqual(left: string, right: string) {
-  const leftBuffer = Buffer.from(left)
-  const rightBuffer = Buffer.from(right)
-
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    crypto.timingSafeEqual(leftBuffer, rightBuffer)
+function getTotals(items: CheckoutItemSnapshot[]) {
+  const subtotal = items.reduce(
+    (total, item) => total + item.productPrice * item.quantity,
+    0,
   )
+  const shipping = getDeliveryChargePaise(subtotal)
+  const gst = 0
+
+  return {
+    subtotal,
+    shipping,
+    gst,
+    total: subtotal + shipping + gst,
+  }
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+function formatCurrency(amountInPaise: number) {
+  return `₹${(amountInPaise / 100).toLocaleString("en-IN")}`
 }
 
 function signCheckoutPayload(payload: CheckoutTokenPayload) {
@@ -260,7 +244,12 @@ function readCheckoutPayload(token: string): CheckoutTokenPayload {
     .update(body)
     .digest("base64url")
 
-  if (!assertTimingSafeEqual(signature, expectedSignature)) {
+  if (
+    !crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature),
+    )
+  ) {
     throw new Error("Invalid checkout token signature")
   }
 
@@ -287,35 +276,10 @@ function verifyRazorpaySignature(payload: RazorpaySuccessPayload) {
     .update(`${payload.razorpay_order_id}|${payload.razorpay_payment_id}`)
     .digest("hex")
 
-  return assertTimingSafeEqual(payload.razorpay_signature, expectedSignature)
-}
-
-function assertCheckoutItemAvailable({
-  productName,
-  productStatus,
-  variantId,
-  variantIsActive,
-  stockQuantity,
-  quantity,
-}: {
-  productName: string
-  productStatus: string
-  variantId: string | null
-  variantIsActive: boolean | null
-  stockQuantity: number | null
-  quantity: number
-}) {
-  if (productStatus !== "active") {
-    throw new CheckoutActionError(`${productName} is not available`)
-  }
-
-  if (!variantId || !variantIsActive) {
-    throw new CheckoutActionError(`${productName} variant is not available`)
-  }
-
-  if ((stockQuantity ?? 0) < quantity) {
-    throw new CheckoutActionError(`${productName} does not have enough stock`)
-  }
+  return crypto.timingSafeEqual(
+    Buffer.from(payload.razorpay_signature),
+    Buffer.from(expectedSignature),
+  )
 }
 
 async function createRazorpayOrder({
@@ -363,14 +327,11 @@ async function getCartCheckoutItems(userId: string) {
       name: products.name,
       sku: products.sku,
       basePrice: products.basePrice,
-      productStatus: products.status,
       imageKey: mediaAssets.key,
       variantId: productVariants.id,
       variantTitle: productVariants.title,
       variantSku: productVariants.sku,
       variantPrice: productVariants.price,
-      variantIsActive: productVariants.isActive,
-      stockQuantity: productVariants.stockQuantity,
       variantBannerImage: productVariants.bannerImage,
       quantity: cartItems.quantity,
     })
@@ -390,15 +351,6 @@ async function getCartCheckoutItems(userId: string) {
     .where(eq(carts.userId, userId))
 
   return rows.map((row) => {
-    assertCheckoutItemAvailable({
-      productName: row.name,
-      productStatus: row.productStatus,
-      variantId: row.variantId,
-      variantIsActive: row.variantIsActive,
-      stockQuantity: row.stockQuantity,
-      quantity: row.quantity,
-    })
-
     const imageKey = row.imageKey ?? row.variantBannerImage
 
     return {
@@ -409,7 +361,7 @@ async function getCartCheckoutItems(userId: string) {
       productName: row.name,
       productSlug: row.slug,
       productSku: row.variantSku ?? row.sku,
-      productImage: imageKey || null,
+      productImage: imageKey ? getS3ObjectPreviewUrl(imageKey) : null,
       variantTitle: row.variantTitle,
     } satisfies CheckoutItemSnapshot
   })
@@ -427,14 +379,11 @@ async function getBuyNowCheckoutItem(input: {
       name: products.name,
       sku: products.sku,
       basePrice: products.basePrice,
-      productStatus: products.status,
       imageKey: mediaAssets.key,
       variantId: productVariants.id,
       variantTitle: productVariants.title,
       variantSku: productVariants.sku,
       variantPrice: productVariants.price,
-      variantIsActive: productVariants.isActive,
-      stockQuantity: productVariants.stockQuantity,
       variantBannerImage: productVariants.bannerImage,
     })
     .from(products)
@@ -462,430 +411,75 @@ async function getBuyNowCheckoutItem(input: {
 
   if (!row) return null
 
-  const quantity = Math.max(1, Number(input.quantity ?? 1))
-
-  assertCheckoutItemAvailable({
-    productName: row.name,
-    productStatus: row.productStatus,
-    variantId: row.variantId,
-    variantIsActive: row.variantIsActive,
-    stockQuantity: row.stockQuantity,
-    quantity,
-  })
-
   const imageKey = row.imageKey ?? row.variantBannerImage
 
   return {
     productId: row.productId,
     variantId: row.variantId,
-    quantity,
+    quantity: Math.max(1, Number(input.quantity ?? 1)),
     productPrice: row.variantPrice ?? row.basePrice,
     productName: row.name,
     productSlug: row.slug,
     productSku: row.variantSku ?? row.sku,
-    productImage: imageKey || null,
+    productImage: imageKey ? getS3ObjectPreviewUrl(imageKey) : null,
     variantTitle: row.variantTitle,
   } satisfies CheckoutItemSnapshot
 }
 
-function formatE164Phone(phone: string) {
-  let digits = phone.replace(/[^\d]/g, '')
-
-  if (digits.startsWith('0')) {
-    digits = digits.slice(1)
-  }
-
-  const withoutCountryCode =
-    digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits
-
-  if (withoutCountryCode.length === 10) {
-    return `+91${withoutCountryCode}`
-  }
-  return phone
-}
-
-async function resolveGuestUserId(
-  email: string,
-  fullName: string,
-  phone?: string,
-  secondPhone?: string,
-) {
-  const normalizedEmail = email.trim().toLowerCase()
-  const [existing] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, normalizedEmail))
-    .limit(1)
-
-  if (existing) {
-    if (secondPhone && secondPhone !== existing.secondPhone) {
-      await db
-        .update(users)
-        .set({
-          secondPhone: formatE164Phone(secondPhone),
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, existing.id))
-    }
-    return existing.id
-  }
-
-  const [newUser] = await db
-    .insert(users)
-    .values({
-      email: normalizedEmail,
-      name: fullName.trim(),
-      phone: phone ? formatE164Phone(phone) : null,
-      secondPhone: secondPhone ? formatE164Phone(secondPhone) : null,
-      cognitoSub: null,
-      emailVerified: false,
-    })
-    .returning()
-
-  return newUser.id
-}
-
-async function getGuestCheckoutItems(guestItems: GuestCartItem[]) {
-  const results: CheckoutItemSnapshot[] = []
-
-  for (const guestItem of guestItems) {
-    const qty = Math.max(1, guestItem.quantity)
-
-    const [row] = await db
-      .select({
-        productId: products.id,
-        slug: products.slug,
-        name: products.name,
-        sku: products.sku,
-        basePrice: products.basePrice,
-        productStatus: products.status,
-        imageKey: mediaAssets.key,
-        variantId: productVariants.id,
-        variantTitle: productVariants.title,
-        variantSku: productVariants.sku,
-        variantPrice: productVariants.price,
-        variantIsActive: productVariants.isActive,
-        stockQuantity: productVariants.stockQuantity,
-        variantBannerImage: productVariants.bannerImage,
-      })
-      .from(products)
-      .leftJoin(
-        productVariants,
-        guestItem.variantId
-          ? eq(productVariants.id, guestItem.variantId)
-          : and(
-              eq(productVariants.productId, products.id),
-              eq(productVariants.isDefault, true),
-              eq(productVariants.isActive, true),
-            ),
-      )
-      .leftJoin(
-        productMedia,
-        and(
-          eq(productMedia.productId, products.id),
-          eq(productMedia.variantId, productVariants.id),
-          eq(productMedia.isPrimary, true),
-        ),
-      )
-      .leftJoin(mediaAssets, eq(mediaAssets.id, productMedia.mediaAssetId))
-      .where(eq(products.id, guestItem.productId))
-      .limit(1)
-
-    if (!row) {
-      throw new CheckoutActionError("An item in your cart is no longer available")
-    }
-
-    assertCheckoutItemAvailable({
-      productName: row.name,
-      productStatus: row.productStatus,
-      variantId: row.variantId,
-      variantIsActive: row.variantIsActive,
-      stockQuantity: row.stockQuantity,
-      quantity: qty,
-    })
-
-    const imageKey = row.imageKey ?? row.variantBannerImage
-
-    results.push({
-      productId: row.productId,
-      variantId: row.variantId,
-      quantity: qty,
-      productPrice: row.variantPrice ?? row.basePrice,
-      productName: row.name,
-      productSlug: row.slug,
-      productSku: row.variantSku ?? row.sku,
-      productImage: imageKey || null,
-      variantTitle: row.variantTitle,
-    })
-  }
-
-  return results
-}
-
-async function createPendingCheckoutOrder(checkout: PendingCheckoutOrderPayload) {
-  return db.transaction(async (tx) => {
-    let orderShipping = { ...checkout.shipping }
-
-    if (checkout.shipping.addressId) {
-      const [address] = await tx
-        .select()
-        .from(addresses)
-        .where(
-          and(
-            eq(addresses.id, checkout.shipping.addressId),
-            eq(addresses.userId, checkout.userId),
-          ),
-        )
-        .limit(1)
-
-      if (!address) {
-        throw new Error("Selected address was not found")
-      }
-
-      orderShipping = mapAddressToShipping(address, checkout.shipping.secondPhone)
-    } else {
-      const [duplicateAddress] = await tx
-        .select()
-        .from(addresses)
-        .where(
-          and(
-            eq(addresses.userId, checkout.userId),
-            eq(addresses.phone, checkout.shipping.phone),
-            eq(addresses.line1, checkout.shipping.addressLine1),
-            eq(addresses.postalCode, checkout.shipping.postalCode),
-          ),
-        )
-        .limit(1)
-
-      if (!duplicateAddress) {
-        const [anyAddress] = await tx
-          .select()
-          .from(addresses)
-          .where(eq(addresses.userId, checkout.userId))
-          .limit(1)
-
-        const [newSavedAddress] = await tx
-          .insert(addresses)
-          .values({
-            userId: checkout.userId,
-            fullName: checkout.shipping.fullName,
-            phone: checkout.shipping.phone,
-            line1: checkout.shipping.addressLine1,
-            line2: checkout.shipping.addressLine2 || null,
-            city: checkout.shipping.city,
-            state: checkout.shipping.state,
-            postalCode: checkout.shipping.postalCode,
-            country: checkout.shipping.country || "India",
-            isDefault: !anyAddress,
-          })
-          .returning({ id: addresses.id })
-
-        if (newSavedAddress) {
-          orderShipping.addressId = newSavedAddress.id
-        }
-      } else {
-        orderShipping.addressId = duplicateAddress.id
-      }
-    }
-
-    if (orderShipping.secondPhone) {
-      await tx
-        .update(users)
-        .set({
-          secondPhone: orderShipping.secondPhone,
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, checkout.userId))
-    }
-
-    const [order] = await tx
-      .insert(orders)
-      .values({
-        orderNumber: getOrderNumber(),
-        userId: checkout.userId,
-        addressId: orderShipping.addressId ?? null,
-        status: "pending",
-        shippingPhone: orderShipping.phone,
-        shippingPhone2: orderShipping.secondPhone || null,
-        addressLine1: orderShipping.addressLine1,
-        addressLine2: orderShipping.addressLine2 ?? null,
-        city: orderShipping.city,
-        state: orderShipping.state,
-        postalCode: orderShipping.postalCode,
-        country: orderShipping.country ?? "India",
-        totalAmount: checkout.amountInPaise,
-      })
-      .returning({
-        id: orders.id,
-        orderNumber: orders.orderNumber,
-      })
-
-    await tx.insert(orderItems).values(
-      checkout.items.map((item) => ({
-        orderId: order.id,
-        variantId: item.variantId,
-        quantity: item.quantity,
-        productPrice: item.productPrice,
-        productName: item.productName,
-        productSlug: item.productSlug,
-        productSku: item.productSku,
-        productImage: item.productImage,
-        variantTitle: item.variantTitle,
-      })),
-    )
-
-    return { orderId: order.id, orderNumber: order.orderNumber }
-  })
-}
-
-async function createPendingCheckoutPayment({
-  orderId,
-  checkout,
-  clearDbCartUserId,
-}: {
-  orderId: string
-  checkout: CheckoutTokenPayload
-  clearDbCartUserId?: string | null
-}) {
-  await db.insert(payments).values({
-    orderId,
-    provider: "razorpay",
-    status: "pending",
-    providerOrderId: checkout.providerOrderId,
-    amountInPaise: checkout.amountInPaise,
-    metadata: {
-      source: checkout.source,
-      checkoutCreatedAt: checkout.createdAt,
-      checkoutUserId: checkout.userId,
-      clearDbCartUserId: clearDbCartUserId ?? null,
-    },
-  })
-}
-
-async function findCheckoutPayment(providerOrderId: string) {
-  const [payment] = await db
-    .select({
-      orderId: payments.orderId,
-      status: payments.status,
-      amountInPaise: payments.amountInPaise,
-      orderTotalAmount: orders.totalAmount,
-    })
-    .from(payments)
-    .innerJoin(orders, eq(orders.id, payments.orderId))
-    .where(eq(payments.providerOrderId, providerOrderId))
-    .limit(1)
-
-  return payment ?? null
-}
-
-async function waitForWebhookPaymentStatus(providerOrderId: string) {
-  const deadline = Date.now() + 5000
-
-  while (Date.now() < deadline) {
-    const payment = await findCheckoutPayment(providerOrderId)
-
-    if (payment?.status === "paid" || payment?.status === "failed") {
-      return payment.status
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-
-  return null
-}
-
 export async function createCartPaymentOrder(input: {
   shipping: ShippingDetails
-  guestItems?: GuestCartItem[]
+  totalAmount?: number
 }) {
-  const inputShipping = normalizeShippingDetails(input.shipping)
-  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
-
-  if (secondPhoneError) {
-    return { success: false, message: secondPhoneError }
-  }
-
-  const sessionUserId = await getCurrentDbUserId()
-  let userId = sessionUserId
+  const userId = await getCurrentDbUserId()
 
   if (!userId) {
-    if (!inputShipping.email) {
-      return { success: false, userIsNotLoggedIn: true, message: "Login required" }
-    }
-    try {
-      userId = await resolveGuestUserId(
-        inputShipping.email,
-        inputShipping.fullName,
-        inputShipping.phone,
-        inputShipping.secondPhone,
-      )
-    } catch (err) {
-      return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
-    }
+    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
   }
 
-  const shippingResult = await resolveShippingDetails(userId, inputShipping)
+  const shippingResult = await resolveShippingDetails(userId, input.shipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
   }
 
   try {
-    // Logged-in users: read cart from DB. Guests: use items sent from the frontend (prices always re-fetched from DB).
-    const isGuest = !sessionUserId
-    const items = isGuest && input.guestItems?.length
-      ? await getGuestCheckoutItems(input.guestItems)
-      : await getCartCheckoutItems(userId)
+    const items = await getCartCheckoutItems(userId)
 
     if (items.length === 0) {
       return { success: false, message: "Cart is empty" }
     }
 
     const totals = getTotals(items)
-    const pendingCheckoutPayload = {
+    const payableAmountInPaise =
+      input.totalAmount != null && input.totalAmount > 0
+        ? Math.round(input.totalAmount * 100)
+        : totals.total
+    const receipt = getOrderNumber()
+    const razorpayOrder = await createRazorpayOrder({
+      amountInPaise: payableAmountInPaise,
+      receipt,
+    })
+    const checkoutToken = signCheckoutPayload({
       userId,
       source: "cart",
-      amountInPaise: totals.total,
+      providerOrderId: razorpayOrder.id,
+      amountInPaise: payableAmountInPaise,
       shipping: shippingResult.shipping,
       items,
       createdAt: Date.now(),
-    } satisfies PendingCheckoutOrderPayload
-    const pendingOrder = await createPendingCheckoutOrder(pendingCheckoutPayload)
-    const razorpayOrder = await createRazorpayOrder({
-      amountInPaise: totals.total,
-      receipt: pendingOrder.orderNumber,
-    })
-    const checkoutPayload = {
-      ...pendingCheckoutPayload,
-      providerOrderId: razorpayOrder.id,
-    } satisfies CheckoutTokenPayload
-    await createPendingCheckoutPayment({
-      orderId: pendingOrder.orderId,
-      checkout: checkoutPayload,
-      clearDbCartUserId: sessionUserId,
-    })
-    const checkoutToken = signCheckoutPayload({
-      ...checkoutPayload,
-      orderId: pendingOrder.orderId,
     })
 
     return {
       success: true,
       keyId: getRazorpayKeyId(),
       providerOrderId: razorpayOrder.id,
-      amountInPaise: totals.total,
+      amountInPaise: payableAmountInPaise,
       currency,
       checkoutToken,
     }
   } catch (error) {
     console.error("Create payment order failed:", error)
-    return {
-      success: false,
-      message:
-        error instanceof CheckoutActionError
-          ? error.message
-          : "Unable to start payment",
-    }
+    return { success: false, message: "Unable to start payment" }
   }
 }
 
@@ -894,38 +488,19 @@ export async function createBuyNowPaymentOrder(input: {
   productId?: string
   variantId?: string | null
   quantity?: number
+  totalAmount?: number
 }) {
-  const inputShipping = normalizeShippingDetails(input.shipping)
-  const secondPhoneError = getSecondPhoneValidationError(inputShipping.secondPhone)
-
-  if (secondPhoneError) {
-    return { success: false, message: secondPhoneError }
-  }
-
-  const sessionUserId = await getCurrentDbUserId()
-  let userId = sessionUserId
+  const userId = await getCurrentDbUserId()
 
   if (!userId) {
-    if (!inputShipping.email) {
-      return { success: false, userIsNotLoggedIn: true, message: "Login required" }
-    }
-    try {
-      userId = await resolveGuestUserId(
-        inputShipping.email,
-        inputShipping.fullName,
-        inputShipping.phone,
-        inputShipping.secondPhone,
-      )
-    } catch (err) {
-      return { success: false, message: err instanceof Error ? err.message : "Guest checkout failed" }
-    }
+    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
   }
 
   if (!input.productId) {
     return { success: false, message: "Product id is required" }
   }
 
-  const shippingResult = await resolveShippingDetails(userId, inputShipping)
+  const shippingResult = await resolveShippingDetails(userId, input.shipping)
 
   if (!shippingResult.ok) {
     return { success: false, message: shippingResult.message }
@@ -944,50 +519,36 @@ export async function createBuyNowPaymentOrder(input: {
 
     const items = [item]
     const totals = getTotals(items)
-    const pendingCheckoutPayload = {
+    const payableAmountInPaise =
+      input.totalAmount != null && input.totalAmount > 0
+        ? Math.round(input.totalAmount * 100)
+        : totals.total
+    const receipt = getOrderNumber()
+    const razorpayOrder = await createRazorpayOrder({
+      amountInPaise: payableAmountInPaise,
+      receipt,
+    })
+    const checkoutToken = signCheckoutPayload({
       userId,
       source: "buy-now",
-      amountInPaise: totals.total,
+      providerOrderId: razorpayOrder.id,
+      amountInPaise: payableAmountInPaise,
       shipping: shippingResult.shipping,
       items,
       createdAt: Date.now(),
-    } satisfies PendingCheckoutOrderPayload
-    const pendingOrder = await createPendingCheckoutOrder(pendingCheckoutPayload)
-    const razorpayOrder = await createRazorpayOrder({
-      amountInPaise: totals.total,
-      receipt: pendingOrder.orderNumber,
-    })
-    const checkoutPayload = {
-      ...pendingCheckoutPayload,
-      providerOrderId: razorpayOrder.id,
-    } satisfies CheckoutTokenPayload
-    await createPendingCheckoutPayment({
-      orderId: pendingOrder.orderId,
-      checkout: checkoutPayload,
-      clearDbCartUserId: null,
-    })
-    const checkoutToken = signCheckoutPayload({
-      ...checkoutPayload,
-      orderId: pendingOrder.orderId,
     })
 
     return {
       success: true,
       keyId: getRazorpayKeyId(),
       providerOrderId: razorpayOrder.id,
-      amountInPaise: totals.total,
+      amountInPaise: payableAmountInPaise,
       currency,
       checkoutToken,
     }
   } catch (error) {
     console.error("Create buy now payment order failed:", error)
-    return {
-      success: false,
-      message:
-        error instanceof CheckoutActionError
-          ? error.message
-          : "Unable to start payment",
-    }
+    return { success: false, message: "Unable to start payment" }
   }
 }
 
@@ -995,17 +556,21 @@ export async function completeRazorpayPayment(input: {
   checkoutToken: string
   razorpay: RazorpaySuccessPayload
 }) {
+  const userId = await getCurrentDbUserId()
+
+  if (!userId) {
+    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+  }
+
   try {
     if (!verifyRazorpaySignature(input.razorpay)) {
       return { success: false, message: "Payment verification failed" }
     }
 
     const checkout = readCheckoutPayload(input.checkoutToken)
-    const sessionUserId = await getCurrentDbUserId()
 
     if (
-      !checkout.orderId ||
-      (sessionUserId && checkout.userId !== sessionUserId) ||
+      checkout.userId !== userId ||
       checkout.providerOrderId !== input.razorpay.razorpay_order_id
     ) {
       return { success: false, message: "Payment verification failed" }
@@ -1013,47 +578,939 @@ export async function completeRazorpayPayment(input: {
 
     const totals = getTotals(checkout.items)
 
-    if (totals.total !== checkout.amountInPaise) {
+    if (checkout.amountInPaise < totals.subtotal) {
       return { success: false, message: "Payment amount mismatch" }
     }
 
-    const payment = await findCheckoutPayment(checkout.providerOrderId)
+    const result = await db.transaction(async (tx) => {
+      const [existingPayment] = await tx
+        .select({
+          id: payments.id,
+          orderId: payments.orderId,
+        })
+        .from(payments)
+        .where(eq(payments.providerPaymentId, input.razorpay.razorpay_payment_id!))
+        .limit(1)
 
-    if (
-      !payment ||
-      payment.orderId !== checkout.orderId ||
-      payment.amountInPaise !== checkout.amountInPaise ||
-      payment.orderTotalAmount !== checkout.amountInPaise
-    ) {
-      return { success: false, message: "Payment verification failed" }
+      if (existingPayment) {
+        return { orderId: existingPayment.orderId }
+      }
+
+      let orderShipping = { ...checkout.shipping }
+
+      if (checkout.shipping.addressId) {
+        const [address] = await tx
+          .select()
+          .from(addresses)
+          .where(
+            and(
+              eq(addresses.id, checkout.shipping.addressId),
+              eq(addresses.userId, userId),
+            ),
+          )
+          .limit(1)
+
+        if (!address) {
+          throw new Error("Selected address was not found")
+        }
+
+        orderShipping = mapAddressToShipping(address)
+      } else {
+        const [duplicateAddress] = await tx
+          .select()
+          .from(addresses)
+          .where(
+            and(
+              eq(addresses.userId, userId),
+              eq(addresses.phone, checkout.shipping.phone),
+              eq(addresses.line1, checkout.shipping.addressLine1),
+              eq(addresses.postalCode, checkout.shipping.postalCode),
+            ),
+          )
+          .limit(1)
+
+        if (!duplicateAddress) {
+          const [anyAddress] = await tx
+            .select()
+            .from(addresses)
+            .where(eq(addresses.userId, userId))
+            .limit(1)
+
+          const [newSavedAddress] = await tx
+            .insert(addresses)
+            .values({
+              userId,
+              fullName: checkout.shipping.fullName,
+              phone: checkout.shipping.phone,
+              line1: checkout.shipping.addressLine1,
+              line2: checkout.shipping.addressLine2 || null,
+              city: checkout.shipping.city,
+              state: checkout.shipping.state,
+              postalCode: checkout.shipping.postalCode,
+              country: checkout.shipping.country || "India",
+              isDefault: !anyAddress,
+            })
+            .returning({ id: addresses.id })
+
+          if (newSavedAddress) {
+            orderShipping.addressId = newSavedAddress.id
+          }
+        } else {
+          orderShipping.addressId = duplicateAddress.id
+        }
+      }
+
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          orderNumber: getOrderNumber(),
+          userId,
+          addressId: orderShipping.addressId ?? null,
+          status: "paid",
+          shippingPhone: orderShipping.phone,
+          addressLine1: orderShipping.addressLine1,
+          addressLine2: orderShipping.addressLine2 ?? null,
+          city: orderShipping.city,
+          state: orderShipping.state,
+          postalCode: orderShipping.postalCode,
+          country: orderShipping.country ?? "India",
+          totalAmount: checkout.amountInPaise,
+        })
+        .returning({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          createdAt: orders.createdAt,
+          totalAmount: orders.totalAmount,
+        })
+
+      await tx.insert(orderItems).values(
+        checkout.items.map((item) => ({
+          orderId: order.id,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          productPrice: item.productPrice,
+          productName: item.productName,
+          productSlug: item.productSlug,
+          productSku: item.productSku,
+          productImage: item.productImage,
+          variantTitle: item.variantTitle,
+        })),
+      )
+
+      await tx.insert(payments).values({
+        orderId: order.id,
+        provider: "razorpay",
+        status: "paid",
+        providerOrderId: input.razorpay.razorpay_order_id,
+        providerPaymentId: input.razorpay.razorpay_payment_id,
+        amountInPaise: checkout.amountInPaise,
+        metadata: input.razorpay,
+      })
+
+      if (checkout.source === "cart") {
+        const [userCart] = await tx
+          .select({ id: carts.id })
+          .from(carts)
+          .where(eq(carts.userId, userId))
+          .limit(1)
+
+        if (userCart) {
+          await tx
+            .delete(cartItems)
+            .where(eq(cartItems.cartId, userCart.id))
+        }
+      }
+
+      return {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        createdAt: order.createdAt,
+        totalAmount: order.totalAmount,
+        source: checkout.source,
+        items: checkout.items,
+      }
+    })
+
+    if (result.source) {
+      const sessionUser = await getCurrentUser()
+      const email = sessionUser?.email
+
+      if (email) {
+        const customerName =
+          sessionUser?.name || email.split("@")[0] || "Customer"
+
+        try {
+          await notifyOrderConfirmationEmail({
+            email,
+            customerName,
+            orderId: result.orderNumber,
+            orderDate: formatDate(result.createdAt),
+            productNames: result.items
+              .map((item) => item.productName)
+              .filter(Boolean)
+              .join(", "),
+            orderTotal: formatCurrency(result.totalAmount),
+          })
+        } catch (emailError) {
+          console.error("Unable to send order confirmation email:", emailError)
+        }
+
+        try {
+          const [orderCount] = await db
+            .select({ value: count() })
+            .from(orders)
+            .where(eq(orders.userId, userId))
+
+          if ((orderCount?.value ?? 0) === 1) {
+            await notifyFirstOrderEmail({ email, customerName })
+          }
+        } catch (emailError) {
+          console.error("Unable to send first order email:", emailError)
+        }
+      }
     }
 
-    const razorpayPayment = await fetchRazorpayPayment(
-      input.razorpay.razorpay_payment_id!,
-    )
-
-    if (
-      !isCapturedRazorpayPayment(razorpayPayment) ||
-      razorpayPayment.order_id !== checkout.providerOrderId ||
-      razorpayPayment.amount !== checkout.amountInPaise ||
-      razorpayPayment.currency !== currency
-    ) {
-      return { success: false, message: "Payment verification failed" }
-    }
-
-    const finalizedStatus =
-      payment.status === "paid"
-        ? "paid"
-        : await waitForWebhookPaymentStatus(checkout.providerOrderId)
-
-    return {
-      success: true,
-      orderId: checkout.orderId,
-      source: checkout.source,
-      paymentFinalized: finalizedStatus === "paid",
-    }
+    return { success: true, orderId: result.orderId, source: result.source }
   } catch (error) {
     console.error("Complete payment failed:", error)
     return { success: false, message: "Unable to complete payment" }
   }
 }
+
+export async function createCartPaymentOrderIcici(input: {
+  shipping: ShippingDetails
+  totalAmount?: number
+}) {
+  const userId = await getCurrentDbUserId()
+
+  if (!userId) {
+    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+  }
+
+  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+
+  if (!shippingResult.ok) {
+    return { success: false, message: shippingResult.message }
+  }
+
+  try {
+    const items = await getCartCheckoutItems(userId)
+
+    if (items.length === 0) {
+      return { success: false, message: "Cart is empty" }
+    }
+
+    const totals = getTotals(items)
+    const payableAmountInPaise =
+      input.totalAmount != null && input.totalAmount > 0
+        ? Math.round(input.totalAmount * 100)
+        : totals.total
+    const merchantTxnNo = generateMerchantTxnNo()
+    const sessionUser = await getCurrentUser()
+
+    const iciciSale = await initiateIciciSale({
+      amountInPaise: payableAmountInPaise,
+      merchantTxnNo,
+      customerName:
+        shippingResult.shipping.fullName || sessionUser?.name || "Customer",
+      customerEmail: sessionUser?.email || "customer@roopshree.com",
+      customerPhone: shippingResult.shipping.phone,
+    })
+
+    if (!iciciSale.success || !iciciSale.redirectUrl) {
+      return {
+        success: false,
+        message: iciciSale.message || "Failed to initialize ICICI payment gateway",
+      }
+    }
+
+    let orderShipping = { ...shippingResult.shipping }
+
+    if (shippingResult.shipping.addressId) {
+      const [address] = await db
+        .select()
+        .from(addresses)
+        .where(
+          and(
+            eq(addresses.id, shippingResult.shipping.addressId),
+            eq(addresses.userId, userId),
+          ),
+        )
+        .limit(1)
+
+      if (address) {
+        orderShipping = mapAddressToShipping(address)
+      }
+    }
+
+    let createdOrderId: string | null = null
+
+    await db.transaction(async (tx) => {
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          orderNumber: getOrderNumber(),
+          userId,
+          addressId: orderShipping.addressId ?? null,
+          status: "pending",
+          shippingPhone: orderShipping.phone,
+          addressLine1: orderShipping.addressLine1,
+          addressLine2: orderShipping.addressLine2 || null,
+          city: orderShipping.city,
+          state: orderShipping.state,
+          postalCode: orderShipping.postalCode,
+          country: orderShipping.country || "India",
+          totalAmount: payableAmountInPaise,
+        })
+        .returning({ id: orders.id })
+
+      createdOrderId = order.id
+
+      await tx.insert(orderItems).values(
+        items.map((item) => ({
+          orderId: order.id,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          productPrice: item.productPrice,
+          productName: item.productName,
+          productSlug: item.productSlug,
+          productSku: item.productSku,
+          productImage: item.productImage,
+          variantTitle: item.variantTitle,
+        })),
+      )
+
+      await tx.insert(payments).values({
+        orderId: order.id,
+        provider: "icici",
+        status: "pending",
+        providerOrderId: merchantTxnNo,
+        amountInPaise: payableAmountInPaise,
+        metadata: {
+          source: "cart",
+          items,
+          merchantTxnNo,
+        },
+      })
+    })
+
+    return {
+      success: true,
+      redirectUrl: iciciSale.redirectUrl,
+      merchantTxnNo,
+      orderId: createdOrderId,
+    }
+  } catch (error) {
+    console.error("Create ICICI cart payment order failed:", error)
+    return { success: false, message: "Unable to start ICICI payment" }
+  }
+}
+
+export async function createBuyNowPaymentOrderIcici(input: {
+  shipping: ShippingDetails
+  productId?: string
+  variantId?: string | null
+  quantity?: number
+  totalAmount?: number
+}) {
+  const userId = await getCurrentDbUserId()
+
+  if (!userId) {
+    return { success: false, userIsNotLoggedIn: true, message: "Login required" }
+  }
+
+  if (!input.productId) {
+    return { success: false, message: "Product id is required" }
+  }
+
+  const shippingResult = await resolveShippingDetails(userId, input.shipping)
+
+  if (!shippingResult.ok) {
+    return { success: false, message: shippingResult.message }
+  }
+
+  try {
+    const item = await getBuyNowCheckoutItem({
+      productId: input.productId,
+      variantId: input.variantId,
+      quantity: input.quantity,
+    })
+
+    if (!item) {
+      return { success: false, message: "Product not found" }
+    }
+
+    const items = [item]
+    const totals = getTotals(items)
+    const payableAmountInPaise =
+      input.totalAmount != null && input.totalAmount > 0
+        ? Math.round(input.totalAmount * 100)
+        : totals.total
+    const merchantTxnNo = generateMerchantTxnNo()
+    const sessionUser = await getCurrentUser()
+
+    const iciciSale = await initiateIciciSale({
+      amountInPaise: payableAmountInPaise,
+      merchantTxnNo,
+      customerName:
+        shippingResult.shipping.fullName || sessionUser?.name || "Customer",
+      customerEmail: sessionUser?.email || "customer@roopshree.com",
+      customerPhone: shippingResult.shipping.phone,
+    })
+
+    if (!iciciSale.success || !iciciSale.redirectUrl) {
+      return {
+        success: false,
+        message: iciciSale.message || "Failed to initialize ICICI payment gateway",
+      }
+    }
+
+    let orderShipping = { ...shippingResult.shipping }
+
+    if (shippingResult.shipping.addressId) {
+      const [address] = await db
+        .select()
+        .from(addresses)
+        .where(
+          and(
+            eq(addresses.id, shippingResult.shipping.addressId),
+            eq(addresses.userId, userId),
+          ),
+        )
+        .limit(1)
+
+      if (address) {
+        orderShipping = mapAddressToShipping(address)
+      }
+    }
+
+    let createdOrderId: string | null = null
+
+    await db.transaction(async (tx) => {
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          orderNumber: getOrderNumber(),
+          userId,
+          addressId: orderShipping.addressId ?? null,
+          status: "pending",
+          shippingPhone: orderShipping.phone,
+          addressLine1: orderShipping.addressLine1,
+          addressLine2: orderShipping.addressLine2 || null,
+          city: orderShipping.city,
+          state: orderShipping.state,
+          postalCode: orderShipping.postalCode,
+          country: orderShipping.country || "India",
+          totalAmount: payableAmountInPaise,
+        })
+        .returning({ id: orders.id })
+
+      createdOrderId = order.id
+
+      await tx.insert(orderItems).values(
+        items.map((i) => ({
+          orderId: order.id,
+          variantId: i.variantId,
+          quantity: i.quantity,
+          productPrice: i.productPrice,
+          productName: i.productName,
+          productSlug: i.productSlug,
+          productSku: i.productSku,
+          productImage: i.productImage,
+          variantTitle: i.variantTitle,
+        })),
+      )
+
+      await tx.insert(payments).values({
+        orderId: order.id,
+        provider: "icici",
+        status: "pending",
+        providerOrderId: merchantTxnNo,
+        amountInPaise: payableAmountInPaise,
+        metadata: {
+          source: "buy-now",
+          items,
+          merchantTxnNo,
+        },
+      })
+    })
+
+    return {
+      success: true,
+      redirectUrl: iciciSale.redirectUrl,
+      merchantTxnNo,
+      orderId: createdOrderId,
+    }
+  } catch (error) {
+    console.error("Create ICICI buy-now payment order failed:", error)
+    return { success: false, message: "Unable to start ICICI payment" }
+  }
+}
+
+export async function finalizeIciciPaymentOrder({
+  merchantTxnNo,
+  bankRefNo,
+  status,
+  rawResponse,
+  paidAmountInPaise,
+}: {
+  merchantTxnNo: string
+  bankRefNo?: string
+  status: "paid" | "failed"
+  rawResponse?: Record<string, unknown>
+  paidAmountInPaise?: number
+}) {
+  try {
+    const [existingPayment] = await db
+      .select({
+        id: payments.id,
+        orderId: payments.orderId,
+        status: payments.status,
+        metadata: payments.metadata,
+        amountInPaise: payments.amountInPaise,
+      })
+      .from(payments)
+      .where(eq(payments.providerOrderId, merchantTxnNo))
+      .limit(1)
+
+    if (!existingPayment) {
+      return { success: false, message: "Payment transaction not found" }
+    }
+
+    if (existingPayment.status === "paid") {
+      return { success: true, orderId: existingPayment.orderId }
+    }
+
+    if (status === "failed") {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(payments)
+          .set({
+            status: "failed",
+            metadata: {
+              ...(typeof existingPayment.metadata === "object"
+                ? (existingPayment.metadata as Record<string, unknown>)
+                : {}),
+              failureResponse: rawResponse,
+            },
+            updatedAt: new Date(),
+          })
+          .where(eq(payments.id, existingPayment.id))
+
+        await tx
+          .update(orders)
+          .set({
+            status: "cancelled",
+            updatedAt: new Date(),
+          })
+          .where(eq(orders.id, existingPayment.orderId))
+      })
+
+      return {
+        success: false,
+        orderId: existingPayment.orderId,
+        message: "Payment failed or was cancelled",
+      }
+    }
+
+    // Amount Verification: Verify paid amount matches the order payment record
+    if (paidAmountInPaise !== undefined && paidAmountInPaise !== null) {
+      if (paidAmountInPaise !== existingPayment.amountInPaise) {
+        console.error(
+          `[ICICI Payment Security Alert] Amount mismatch! Expected: ${existingPayment.amountInPaise} paise, but received: ${paidAmountInPaise} paise. MerchantTxnNo: ${merchantTxnNo}`,
+        )
+        await db.transaction(async (tx) => {
+          await tx
+            .update(payments)
+            .set({
+              status: "failed",
+              metadata: {
+                ...(typeof existingPayment.metadata === "object"
+                  ? (existingPayment.metadata as Record<string, unknown>)
+                  : {}),
+                failureReason: "AMOUNT_MISMATCH",
+                expectedAmountInPaise: existingPayment.amountInPaise,
+                receivedAmountInPaise: paidAmountInPaise,
+                failureResponse: rawResponse,
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(payments.id, existingPayment.id))
+
+          await tx
+            .update(orders)
+            .set({
+              status: "cancelled",
+              updatedAt: new Date(),
+            })
+            .where(eq(orders.id, existingPayment.orderId))
+        })
+
+        return {
+          success: false,
+          orderId: existingPayment.orderId,
+          message: "Payment amount mismatch detected. Order cancelled.",
+        }
+      }
+    }
+
+    // Success path
+    const orderDetails = await db.transaction(async (tx) => {
+      await tx
+        .update(payments)
+        .set({
+          status: "paid",
+          providerPaymentId: bankRefNo || merchantTxnNo,
+          metadata: {
+            ...(typeof existingPayment.metadata === "object"
+              ? (existingPayment.metadata as Record<string, unknown>)
+              : {}),
+            successResponse: rawResponse,
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, existingPayment.id))
+
+      const [order] = await tx
+        .update(orders)
+        .set({
+          status: "paid",
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, existingPayment.orderId))
+        .returning({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          userId: orders.userId,
+          createdAt: orders.createdAt,
+          totalAmount: orders.totalAmount,
+        })
+
+      const items = await tx
+        .select({
+          productName: orderItems.productName,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, existingPayment.orderId))
+
+      const metadataObj =
+        typeof existingPayment.metadata === "object"
+          ? (existingPayment.metadata as Record<string, unknown>)
+          : null
+      const isCartSource = metadataObj?.source === "cart"
+
+      if (isCartSource && order.userId) {
+        const [userCart] = await tx
+          .select({ id: carts.id })
+          .from(carts)
+          .where(eq(carts.userId, order.userId))
+          .limit(1)
+
+        if (userCart) {
+          await tx
+            .delete(cartItems)
+            .where(eq(cartItems.cartId, userCart.id))
+        }
+      }
+
+      return {
+        order,
+        items,
+      }
+    })
+
+    let customerEmail: string | undefined
+    let customerName = "Customer"
+
+    if (orderDetails.order.userId) {
+      try {
+        const [customer] = await db
+          .select({
+            email: users.email,
+            name: users.name,
+          })
+          .from(users)
+          .where(eq(users.id, orderDetails.order.userId))
+          .limit(1)
+
+        if (customer?.email) {
+          customerEmail = customer.email
+          customerName = customer.name || "Customer"
+        }
+      } catch (e) {
+        console.error("Error fetching customer for order confirmation:", e)
+      }
+    }
+
+    if (!customerEmail) {
+      try {
+        const sessionUser = await getCurrentUser()
+        if (sessionUser?.email) {
+          customerEmail = sessionUser.email
+          customerName = sessionUser.name || sessionUser.email.split("@")[0] || "Customer"
+        }
+      } catch {}
+    }
+
+    if (!customerEmail && rawResponse) {
+      customerEmail = (rawResponse.customerEmailID || rawResponse.email || rawResponse.customerEmail) as string | undefined
+    }
+
+    if (customerEmail) {
+      try {
+        await notifyOrderConfirmationEmail({
+          email: customerEmail,
+          customerName,
+          orderId: orderDetails.order.orderNumber,
+          orderDate: formatDate(orderDetails.order.createdAt),
+          productNames: orderDetails.items
+            .map((item) => item.productName)
+            .filter(Boolean)
+            .join(", "),
+          orderTotal: formatCurrency(orderDetails.order.totalAmount),
+        })
+        console.log(`[Order Confirmation] Email successfully dispatched to ${customerEmail}`)
+
+        if (orderDetails.order.userId) {
+          const [orderCount] = await db
+            .select({ value: count() })
+            .from(orders)
+            .where(eq(orders.userId, orderDetails.order.userId))
+
+          if ((orderCount?.value ?? 0) === 1) {
+            await notifyFirstOrderEmail({
+              email: customerEmail,
+              customerName,
+            })
+          }
+        }
+      } catch (emailErr) {
+        console.error("Unable to send ICICI confirmation email:", emailErr)
+      }
+    }
+
+    return {
+      success: true,
+      orderId: orderDetails.order.id,
+    }
+  } catch (error) {
+    console.error("finalizeIciciPaymentOrder error:", error)
+    return {
+      success: false,
+      message: "Unable to finalize ICICI payment order",
+    }
+  }
+}
+
+export async function cancelPendingOrderAction({
+  orderId,
+  merchantTxnNo,
+}: {
+  orderId?: string
+  merchantTxnNo?: string
+}) {
+  try {
+    const userId = await getCurrentDbUserId()
+
+    let targetOrderId = orderId
+
+    if (!targetOrderId && merchantTxnNo) {
+      const [paymentRecord] = await db
+        .select({ orderId: payments.orderId })
+        .from(payments)
+        .where(
+          or(
+            eq(payments.providerOrderId, merchantTxnNo),
+            eq(payments.providerPaymentId, merchantTxnNo),
+          ),
+        )
+        .limit(1)
+
+      if (paymentRecord?.orderId) {
+        targetOrderId = paymentRecord.orderId
+      }
+    }
+
+    if (!targetOrderId) {
+      return { success: false, message: "Order not found" }
+    }
+
+    const isOrderNumber = targetOrderId.startsWith("RS-")
+    const orderCondition = isOrderNumber
+      ? eq(orders.orderNumber, targetOrderId)
+      : eq(orders.id, targetOrderId)
+
+    const whereConditions = [orderCondition]
+    if (userId) {
+      whereConditions.push(eq(orders.userId, userId))
+    }
+
+    const [existingOrder] = await db
+      .select({ id: orders.id, status: orders.status })
+      .from(orders)
+      .where(and(...whereConditions))
+      .limit(1)
+
+    if (!existingOrder) {
+      return { success: false, message: "Order not found" }
+    }
+
+    if (existingOrder.status === "pending") {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(orders)
+          .set({ status: "cancelled", updatedAt: new Date() })
+          .where(eq(orders.id, existingOrder.id))
+
+        await tx
+          .update(payments)
+          .set({ status: "failed", updatedAt: new Date() })
+          .where(eq(payments.orderId, existingOrder.id))
+      })
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("cancelPendingOrderAction error:", error)
+    return { success: false, message: "Unable to cancel pending order" }
+  }
+}
+
+export async function getPendingOrderSummaryAction(orderId?: string) {
+  try {
+    const userId = await getCurrentDbUserId()
+
+    // 1. If an explicit orderId is provided (e.g. from client session):
+    if (orderId) {
+      const isOrderNumber = orderId.startsWith("RS-")
+      const orderMatchCondition = isOrderNumber
+        ? eq(orders.orderNumber, orderId)
+        : eq(orders.id, orderId)
+
+      const [order] = await db
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          totalAmount: orders.totalAmount,
+          createdAt: orders.createdAt,
+          status: orders.status,
+          userId: orders.userId,
+        })
+        .from(orders)
+        .where(orderMatchCondition)
+        .limit(1)
+
+      if (!order) return { hasPending: false }
+
+      // If user is logged in, verify order ownership if userId exists on order
+      if (userId && order.userId && order.userId !== userId) {
+        return { hasPending: false }
+      }
+
+      // If the order status is NOT "pending" (i.e. cancelled or paid), banner must NOT show!
+      if (order.status !== "pending") {
+        return { hasPending: false }
+      }
+
+      // If order is older than 30 minutes, it's considered expired
+      const ageMs = Date.now() - new Date(order.createdAt).getTime()
+      if (ageMs > 30 * 60 * 1000) {
+        return { hasPending: false }
+      }
+
+      return {
+        hasPending: true,
+        order: {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+        },
+      }
+    }
+
+    // 2. Otherwise, check the user's MOST RECENT order
+    if (!userId) return { hasPending: false }
+
+    const [latestOrder] = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        totalAmount: orders.totalAmount,
+        createdAt: orders.createdAt,
+        status: orders.status,
+      })
+      .from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt))
+      .limit(1)
+
+    if (!latestOrder) {
+      return { hasPending: false }
+    }
+
+    // Crucial: Only show if the latest order is strictly "pending"!
+    // If the latest order is cancelled, failed, or paid, no pending banner should show.
+    if (latestOrder.status !== "pending") {
+      return { hasPending: false }
+    }
+
+    // Must be within last 30 minutes
+    const ageMs = Date.now() - new Date(latestOrder.createdAt).getTime()
+    if (ageMs > 30 * 60 * 1000) {
+      return { hasPending: false }
+    }
+
+    return {
+      hasPending: true,
+      order: {
+        id: latestOrder.id,
+        orderNumber: latestOrder.orderNumber,
+        totalAmount: latestOrder.totalAmount,
+      },
+    }
+  } catch (error) {
+    console.error("getPendingOrderSummaryAction error:", error)
+    return { hasPending: false }
+  }
+}
+
+export async function getOrderStatusForVerificationAction(orderId: string) {
+  try {
+    const [orderRecord] = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1)
+
+    if (!orderRecord) {
+      return { success: false, message: "Order not found" }
+    }
+
+    const [paymentRecord] = await db
+      .select({
+        status: payments.status,
+        providerPaymentId: payments.providerPaymentId,
+      })
+      .from(payments)
+      .where(eq(payments.orderId, orderRecord.id))
+      .limit(1)
+
+    return {
+      success: true,
+      orderStatus: orderRecord.status,
+      paymentStatus: paymentRecord?.status || "pending",
+      orderNumber: orderRecord.orderNumber,
+    }
+  } catch (error) {
+    console.error("getOrderStatusForVerificationAction error:", error)
+    return { success: false, message: "Error fetching order status" }
+  }
+}
+
+
+
+

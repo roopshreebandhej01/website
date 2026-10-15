@@ -1,4 +1,4 @@
-import { formatPrice } from "@/components/global/const"
+import { formatPrice, FREE_DELIVERY_THRESHOLD } from "@/components/global/const"
 import type { CartItem } from "@/store/cartTypes"
 
 type CartSummary = {
@@ -48,17 +48,19 @@ export function CheckoutSummary({
       {/* Totals Section */}
       <div className="mt-5 space-y-3 text-[11px] pt-2">
         <SummaryLine label="Subtotal" value={formatPrice(summary.subtotal)} />
-        <SummaryLine
-          label="Delivery Charge"
-          value={summary.shipping > 0 ? formatPrice(summary.shipping) : "Free"}
-        />
-        <p className="text-[10px] leading-4 text-white/60">
-          {summary.shipping > 0
-            ? "Free delivery on orders ₹500 and above."
-            : "Free delivery applied."}
-        </p>
+        <div>
+          <SummaryLine
+            label="Delivery Charge"
+            value={summary.shipping === 0 ? "FREE" : formatPrice(summary.shipping)}
+          />
+          {summary.shipping > 0 && (
+            <p className="mt-0.5 text-[10px] text-white/50 pl-0">
+              Free delivery on orders {formatPrice(FREE_DELIVERY_THRESHOLD)} and above.
+            </p>
+          )}
+        </div>
       </div>
-      <div className="mt-7 border-t border-white/35 pt-4 text-xs md:mt-24">
+      <div className="mt-7 border-t border-white/35 pt-4 text-xs md:mt-10">
         <SummaryLine label="Total" value={formatPrice(summary.total)} strong />
       </div>
     </aside>

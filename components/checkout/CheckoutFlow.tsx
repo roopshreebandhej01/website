@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { CheckoutReviewModal } from "@/components/checkout/CheckoutReviewModal"
 import { CheckoutSummary } from "@/components/checkout/CheckoutSummary"
@@ -15,8 +15,6 @@ export type CheckoutShippingDetails = {
   addressId?: string
   fullName: string
   phone: string
-  secondPhone?: string
-  email?: string
   addressLine1: string
   addressLine2: string
   city: string
@@ -27,16 +25,11 @@ export type CheckoutShippingDetails = {
 
 const manualAddressId = "manual"
 
-function getAddressShipping(
-  address: AddressView,
-  secondPhone = "",
-): CheckoutShippingDetails {
+function getAddressShipping(address: AddressView): CheckoutShippingDetails {
   return {
     addressId: address.id,
     fullName: address.fullName,
     phone: address.phone,
-    secondPhone,
-    email: "",
     addressLine1: address.line1,
     addressLine2: [address.line2, address.locality].filter(Boolean).join(", "),
     city: address.city,
@@ -46,12 +39,10 @@ function getAddressShipping(
   }
 }
 
-function getEmptyShipping(secondPhone = ""): CheckoutShippingDetails {
+function getEmptyShipping(): CheckoutShippingDetails {
   return {
     fullName: "",
     phone: "",
-    secondPhone,
-    email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -65,8 +56,8 @@ function getInitialAddress(addresses: AddressView[]) {
   return addresses.find((address) => address.isDefault) ?? addresses[0] ?? null
 }
 
-function isShippingComplete(shipping: CheckoutShippingDetails, isGuest: boolean) {
-  const isBaseComplete = Boolean(
+function isShippingComplete(shipping: CheckoutShippingDetails) {
+  return Boolean(
     shipping.fullName.trim() &&
       shipping.phone.trim() &&
       shipping.addressLine1.trim() &&
@@ -74,21 +65,10 @@ function isShippingComplete(shipping: CheckoutShippingDetails, isGuest: boolean)
       shipping.state.trim() &&
       shipping.postalCode.trim(),
   )
-  if (isGuest) {
-    return isBaseComplete && Boolean(shipping.email?.trim())
-  }
-  return isBaseComplete
 }
 
-export function CheckoutFlow({
-  addresses,
-  isGuest,
-  secondPhone = "",
-}: {
-  addresses: AddressView[]
-  isGuest: boolean
-  secondPhone?: string
-}) {
+export function CheckoutFlow({ addresses }: { addresses: AddressView[] }) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const source = searchParams.get("source") === "buy-now" ? "buy-now" : "cart"
 
@@ -103,16 +83,54 @@ export function CheckoutFlow({
   )
 
   const [shipping, setShipping] = useState<CheckoutShippingDetails>(
-    initialAddress
-      ? getAddressShipping(initialAddress, secondPhone)
-      : getEmptyShipping(secondPhone),
+    initialAddress ? getAddressShipping(initialAddress) : getEmptyShipping(),
   )
 
   const items = source === "buy-now" ? (buyNowItem ? [buyNowItem] : []) : cartItems
   const summary = getCartSummary(items)
 
   const isManualAddress = selectedAddressId === manualAddressId
-  const canReviewOrder = items.length > 0 && isShippingComplete(shipping, isGuest)
+  const canReviewOrder = items.length > 0 && isShippingComplete(shipping)
+
+  // If user returns to checkout with an active pending payment (backed out of bank page),
+  // redirect them to their pending order page so they can see the status and act on it.
+  useEffect(() => {
+    function checkAndRedirectPendingPayment() {
+      try {
+        const stored = window.sessionStorage.getItem("roopshree-pending-payment")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          const ageMs = Date.now() - (parsed.timestamp || 0)
+          if (ageMs > 30 * 60 * 1000) {
+            window.sessionStorage.removeItem("roopshree-pending-payment")
+          } else if (parsed.orderId) {
+            window.location.replace(
+              `/order-confirmation?orderId=${encodeURIComponent(parsed.orderId)}`,
+            )
+          }
+        }
+      } catch {}
+    }
+
+    checkAndRedirectPendingPayment()
+
+    window.addEventListener("pageshow", checkAndRedirectPendingPayment)
+    window.addEventListener("popstate", checkAndRedirectPendingPayment)
+    window.addEventListener("focus", checkAndRedirectPendingPayment)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAndRedirectPendingPayment()
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+
+    return () => {
+      window.removeEventListener("pageshow", checkAndRedirectPendingPayment)
+      window.removeEventListener("popstate", checkAndRedirectPendingPayment)
+      window.removeEventListener("focus", checkAndRedirectPendingPayment)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+    }
+  }, [])
 
   useEffect(() => {
     if (source !== "buy-now") return
@@ -143,7 +161,6 @@ export function CheckoutFlow({
           summary={summary}
           source={source}
           shipping={shipping}
-          isGuest={isGuest}
           onClose={() => setIsReviewOpen(false)}
         />
       ) : (
@@ -169,12 +186,7 @@ export function CheckoutFlow({
                       selected={selectedAddressId === address.id}
                       onSelect={() => {
                         setSelectedAddressId(address.id)
-                        setShipping((current) =>
-                          getAddressShipping(
-                            address,
-                            current.secondPhone ?? secondPhone,
-                          ),
-                        )
+                        setShipping(getAddressShipping(address))
                       }}
                     />
                   ))}
@@ -183,9 +195,7 @@ export function CheckoutFlow({
                     type="button"
                     onClick={() => {
                       setSelectedAddressId(manualAddressId)
-                      setShipping((current) =>
-                        getEmptyShipping(current.secondPhone ?? secondPhone),
-                      )
+                      setShipping(getEmptyShipping())
                     }}
                     className={`flex min-h-12 w-full items-center gap-3 border px-4 py-3 text-left text-sm font-medium transition ${
                       isManualAddress
@@ -217,20 +227,6 @@ export function CheckoutFlow({
               >
                 {addresses.length === 0 || isManualAddress ? (
                   <>
-                    {isGuest ? (
-                      <div className="mb-3">
-                        <CheckoutInput
-                          label="Email Address"
-                          value={shipping.email || ""}
-                          onChange={(value) =>
-                            setShipping((current) => ({
-                              ...current,
-                              email: value,
-                            }))
-                          }
-                        />
-                      </div>
-                    ) : null}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <CheckoutInput
                         label="Full Name"
@@ -250,16 +246,6 @@ export function CheckoutFlow({
                           setShipping((current) => ({
                             ...current,
                             phone: value,
-                          }))
-                        }
-                      />
-                      <CheckoutInput
-                        label="Alternate phone no. (Optional)"
-                        value={shipping.secondPhone || ""}
-                        onChange={(value) =>
-                          setShipping((current) => ({
-                            ...current,
-                            secondPhone: value,
                           }))
                         }
                       />
@@ -325,18 +311,8 @@ export function CheckoutFlow({
                 ) : null}
 
                 {addresses.length > 0 && !isManualAddress ? (
-                  <div className="space-y-3 border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
-                    <p>Selected address will be used for this order.</p>
-                    <CheckoutInput
-                      label="Alternate phone no. (Optional)"
-                      value={shipping.secondPhone || ""}
-                      onChange={(value) =>
-                        setShipping((current) => ({
-                          ...current,
-                          secondPhone: value,
-                        }))
-                      }
-                    />
+                  <div className="border border-[#C39150]/45 bg-white/65 px-4 py-3 text-xs font-medium leading-5 text-[#3F2617]">
+                    Selected address will be used for this order.
                   </div>
                 ) : null}
 

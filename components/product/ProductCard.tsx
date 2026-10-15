@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, Minus, Plus, Star, Trash2 } from "lucide-react";
@@ -15,6 +16,12 @@ import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 
 export function ProductCard({ product }: { product: Product }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const {
     handleAddToCart,
     handleDecreaseCartItem,
@@ -33,21 +40,16 @@ export function ProductCard({ product }: { product: Product }) {
   const isWishlisted = useWishlistStore((state) =>
     state.hasItem(storeItem.productId, storeItem.dbProductId),
   );
-  const isInCart = cartQuantity > 0;
+  const isInCart = isMounted && cartQuantity > 0;
+  const showWishlisted = isMounted && isWishlisted;
 
   return (
     <article className="group min-w-0">
       <div className="relative aspect-[0.75] overflow-hidden bg-[#f8efe6] md:aspect-[0.78]">
-        {product.isNewArrival ? (
-          <span className="absolute left-3 top-3 z-10 rounded-[2px] bg-[#3F2617] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
-            New Arrival
-          </span>
-        ) : null}
         <Link
           href={`/product/${product.slug}`}
           className="absolute inset-0"
           aria-label={`View ${product.name}`}
-          prefetch={false}
         >
           {product.image ? (
             <Image
@@ -68,12 +70,12 @@ export function ProductCard({ product }: { product: Product }) {
           aria-label={`Add ${product.name} to wishlist`}
           onClick={() => handleToggleWishlist(storeItem)}
           className={`absolute right-3 top-3 z-10 flex size-8 translate-y-0 items-center justify-center rounded-full bg-[#C39150] text-white opacity-100 transition duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 ${
-            isWishlisted ? "md:opacity-100" : ""
+            showWishlisted ? "md:opacity-100" : ""
           }`}
         >
           <Heart
             className="size-4"
-            fill={isWishlisted ? "currentColor" : "none"}
+            fill={showWishlisted ? "currentColor" : "none"}
           />
         </button>
         <div

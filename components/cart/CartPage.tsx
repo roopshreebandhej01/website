@@ -1,6 +1,7 @@
 "use client"
 
 import { CartItemRow } from "@/components/cart/CartItemRow"
+import { IncompletePaymentBanner } from "@/components/cart/IncompletePaymentBanner"
 import { OrderSummary } from "@/components/cart/OrderSummary"
 import { ProductRecommendations } from "@/components/cart/ProductRecommendations"
 import { getCartSummary, type Product } from "@/components/global/const"
@@ -26,6 +27,8 @@ export function CartPage({
         style={{ backgroundImage: `url(${cartBackgroundImage})` }}
       >
         <div className="mx-auto max-w-[1130px] px-5 pb-14 pt-8 sm:px-6 lg:px-8 lg:pb-16 lg:pt-11">
+          <IncompletePaymentBanner />
+
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_310px]">
             {cartItems.length > 0 ? (
               <CartItemsTable items={cartItems} />

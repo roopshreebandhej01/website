@@ -45,7 +45,7 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'refunded',
 ])
 
-export const paymentProviderEnum = pgEnum('payment_provider', ['razorpay'])
+export const paymentProviderEnum = pgEnum('payment_provider', ['razorpay', 'icici'])
 
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'active',
